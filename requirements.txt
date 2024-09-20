@@ -1,0 +1,4 @@
+modal==0.63.57
+python-dotenv==1.0.0
+streamlit==1.37.0
+openai==1.37.1  # was openai==1.35.13 for llm hosting
