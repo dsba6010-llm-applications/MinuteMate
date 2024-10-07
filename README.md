@@ -1,8 +1,9 @@
 # Documentation
 
 ## Project Overview
-* [LLM-Serving Modal Application](https://github.com/dsba6010-llm-applications/group1/edit/main/Modal_LLM_Serving.md) 
-* [Notebook Interface](https://github.com/dsba6010-llm-applications/group1/blob/main/notebooks/prompting_with_modal.ipynb) for Python-based prompting, mainly for testing purposes
-* Streamlit App for prompting (TODO) - the app's front end
+* [LLM-Serving Modal Application](/llama_src/Llama3_modal_serving.md): the app's current back end, using a Llmama3 model deployed on Modal
+* [Streamlit App](/streamlit_src/Streamlit_serving.md): the app's current front end
+* [Notebook Interface](/notebooks/prompting_with_modal.ipynb): Allows Python-based prompting for testing purposes
+
 
 
