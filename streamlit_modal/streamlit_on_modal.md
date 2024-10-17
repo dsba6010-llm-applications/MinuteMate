@@ -1,4 +1,10 @@
-# modal-streamlit-chat
+# Serving Streamlit on Modal
+
+
+
+
+
+### modal-streamlit-chat
 
 First, create a `.streamlit/secrets.toml` file such that:
 
@@ -8,7 +14,7 @@ DSBA_LLAMA3_KEY="<your key>"
 MODAL_BASE_URL="https://<your url>--vllm-openai-compatible-serve.modal.run"
 ```
 
-# To run locally:
+### To run locally:
 
 ```bash
 $ python3.11 -m venv venv
@@ -17,7 +23,7 @@ $ python -m pip install -r requirements.txt
 $ python -m streamlit run app.py
 ```
 
-# To run on modal:
+### To run on modal:
 
 Make sure you have a [Modal account](https://modal.com/). 
 
