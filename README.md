@@ -1,6 +1,6 @@
 <div align="center">
 <h2>
-    MinuteMade: Speeding up Municipal Communication
+    MinuteMate: Speeding up Municipal Communication
 </h2>
 <img width="300" alt="teaser" src="assets\Fun_Logo.jpg">
 </div>
