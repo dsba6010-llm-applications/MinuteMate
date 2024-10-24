@@ -1,0 +1,5 @@
+streamlit
+transformers
+torch
+torchaudio
+pyannote.audio
