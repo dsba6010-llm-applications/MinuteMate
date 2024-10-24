@@ -5,14 +5,25 @@
 <img width="300" alt="teaser" src="assets\Fun_Logo.jpg">
 </div>
 
-## 📄 Project Overview
+# 📄 Project Overview
+
 MinuteMate improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.
 
 ---
 
-## 🛠️ How to Use
+## Components of MinuteMate
+* AV->Text Preprocessing Pipeline with Whisper: Includes transcription of audio to text as well as attribution of text to specific speakers.
+* [Verba+Weaviate](https://github.com/dsba6010-llm-applications/MinuteMate/blob/main/Verba/README.md): Provides RAG preprocessing of text files (from document management and tokenization to vector embedding), vector database hosting with Weaviate, and a prompting interface. The Verba frontend and Weaviate vector database backend are deployed together, optionally via a single Dockerfile.  They must be supported by LLM integrations for vector embedding and for prompting (these need not be the same).
+* [Llama on Modal](/llama_modal/Llama3_modal_serving.md): An option for serving an LLM.
+* [Streamlit frontend for Llama](/streamlit_modal/streamlit_on_modal.md): A limited front-end for interacting with a Modal-hosted LLM 
+* [Notebooks](/notebooks/prompting_with_modal.ipynb): A notebook for Python-based prompting for testing purposes
+
+
+# 🛠️ How to Use MinuteMate
 
 To use the 'minutemate' library, follow the steps below for different tasks:
+
+## AV->Text Preprocessing Pipeline with Whisper
 
 ### 📝 Transcribe Audio
 
@@ -76,7 +87,7 @@ print(transcript)
 
 ---
 
-## 💬 Speaker Diarization
+### 💬 Speaker Diarization
 
 Speaker diarization helps assign portions of the transcript to specific speakers, helping you know who said what during the meeting.
 
@@ -89,7 +100,7 @@ To set up a Hugging Face token, go to Settings -> Access Tokens, click Create Ne
 
 To set up Hugging Face authentication, follow these steps:
 
-### Install and authenticate Hugging Face:
+#### Install and authenticate Hugging Face:
 
 ```bash
 pip install -U "huggingface_hub[cli]"
@@ -97,7 +108,7 @@ from huggingface_hub import notebook_login
 notebook_login()
 ```
 
-### Run the Speaker Diarization:
+#### Run the Speaker Diarization:
 
 ```python
 from whisperplus.pipelines.whisper_diarize import ASRDiarizationPipeline
@@ -116,18 +127,13 @@ output_text = pipeline(audio_path)
 print(output_text)
 ```
 
-## 🤗 Shoutout
+### 🤗 Shoutout
 
 Audio transcription in this project is made possible thanks to the **WhisperPlus** basemodel, which is based on OpenAI's Whisper. Special thanks to Alec Radford, Jong Wook Kim, Tao Xu, Greg Brockman, Christine McLeavey, and Ilya Sutskever for their work on Whisper-Plus.
 
 You can find their paper [here](https://arxiv.org/abs/2212.04356).
 
-# Documentation
 
-## Project Overview
-* [LLM-Serving Modal Application](/llama_src/Llama3_modal_serving.md): the app's current back end, using a Llmama3 model deployed on Modal
-* [Streamlit App](/streamlit_src/Streamlit_serving.md): the app's current front end
-* [Notebook Interface](/notebooks/prompting_with_modal.ipynb): Allows Python-based prompting for testing purposes
+## RAG Preprocessing Pipeline with Verba
 
-
-
+See Verba documentation
