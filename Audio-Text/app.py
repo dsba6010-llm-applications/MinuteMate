@@ -58,20 +58,11 @@ if uploaded_file is not None:
     # Transcription step
     if st.button("Transcribe Audio"):
         with st.spinner("Transcribing..."):
-            transcription_placeholder = st.empty()  # Placeholder for live transcription
             transcription_data = transcribe_with_whisper(uploaded_file)
 
             if transcription_data:  # Check if transcription data is valid
-                all_chunks = ""  # For storing the full transcription
-
-                # Display live transcription chunks
-                for chunk in transcription_data:
-                    all_chunks += chunk + "\n"
-                    transcription_placeholder.markdown(f'<div class="transcription-box">{all_chunks}</div>', unsafe_allow_html=True)
-                    time.sleep(1)  # Simulate live transcription delay
-
+                st.markdown(f'<div class="transcription-box">{"\n".join(transcription_data)}</div>', unsafe_allow_html=True)
                 st.success("Transcription completed!")
-
             else:
                 st.error("Transcription failed. Please check your audio file or conversion process.")
 
@@ -90,3 +81,25 @@ if uploaded_file is not None:
                 st.success("Diarization completed!")
             else:
                 st.error("Diarization failed. Please check the audio file or diarization process.")
+
+# Add this script to handle audio seeking when a timestamp is clicked
+st.markdown("""
+    <script>
+    function jumpToTime(time) {
+        var audio = document.querySelector('audio');
+        if (audio) {
+            audio.currentTime = time;
+            audio.play();
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('a[href^="#jump-"]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var time = parseFloat(this.getAttribute('href').substring(6));
+                jumpToTime(time);
+            });
+        });
+    });
+    </script>
+""", unsafe_allow_html=True)

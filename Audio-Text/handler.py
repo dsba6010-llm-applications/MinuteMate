@@ -5,9 +5,10 @@ import os
 import streamlit as st
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from pyannote.audio import Pipeline  # Import Diarization Pipeline
+import time
 
 # Load Whisper model and processor directly from Hugging Face
-model_name = "openai/whisper-large-v2"
+model_name = "openai/whisper-small"
 processor = WhisperProcessor.from_pretrained(model_name)
 model = WhisperForConditionalGeneration.from_pretrained(model_name)
 
@@ -46,8 +47,8 @@ def transcribe_with_whisper(audio_file):
     # Initialize the transcription box to display live updates
     transcription_placeholder = st.empty()
 
-    # Split waveform into smaller chunks (e.g., 30 seconds each)
-    chunk_size = sample_rate * 30  # 30 seconds worth of audio
+    # Split waveform into 15-second chunks
+    chunk_size = sample_rate * 15  # 15 seconds worth of audio
     chunks = [waveform[:, i:i+chunk_size] for i in range(0, waveform.size(1), chunk_size)]
 
     all_transcriptions = []
@@ -56,22 +57,29 @@ def transcribe_with_whisper(audio_file):
     for i, chunk in enumerate(chunks):
         # Calculate the start time of the current chunk
         chunk_start_time = (i * chunk_size) / sample_rate
-        chunk_end_time = chunk_start_time + (chunk.size(1) / sample_rate)
 
         # Format the timestamp (e.g., "00:00:00")
         timestamp = f"{int(chunk_start_time // 3600):02}:{int((chunk_start_time % 3600) // 60):02}:{int(chunk_start_time % 60):02}"
 
-        # Ensure the chunk is in the correct format (batch_size=1, feature_dim=1, sequence_length=chunk.size(1))
+        # Process the 15-second chunk with Whisper
         inputs = processor(chunk.squeeze(0), sampling_rate=sample_rate, return_tensors="pt")
         predicted_ids = model.generate(inputs.input_features)
         transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-        
-        # Append the transcription with the timestamp
-        formatted_transcription = f"{timestamp} - {transcription}"
+
+        # Simulate word-by-word updates for each chunk
+        words = transcription.split(" ")
+        current_transcription = ""
+        for word in words:
+            current_transcription += f"{word} "
+            transcription_placeholder.markdown(f"**Live Transcription**\n\n{current_transcription.strip()}", unsafe_allow_html=True)
+            time.sleep(0.1)  # Simulate delay for word-by-word update
+
+        # Append the full 15-second chunk's transcription with the timestamp
+        formatted_transcription = f"[{timestamp}](#jump-{chunk_start_time}) - {transcription}"
         all_transcriptions.append(formatted_transcription)
 
         # Update the live transcription in the placeholder
-        transcription_placeholder.markdown(f"**Live Transcription**\n\n" + "\n\n".join(all_transcriptions))
+        transcription_placeholder.markdown(f"**Live Transcription**\n\n" + "\n\n".join(all_transcriptions), unsafe_allow_html=True)
 
         # Update progress bar
         progress_bar.progress((i + 1) / len(chunks))
@@ -81,7 +89,7 @@ def transcribe_with_whisper(audio_file):
     # Clean up temporary files
     os.remove(converted_audio_path)
 
-    return [full_transcription]
+    return all_transcriptions
 
 def diarize_audio(audio_file):
     # Load Pyannote diarization model
