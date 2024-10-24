@@ -3,3 +3,9 @@ transformers
 torch
 torchaudio
 pyannote.audio
+soundfile
+pydub
+ffmpeg-python
+numpy
+huggingface_hub
+aiofiles
