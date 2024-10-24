@@ -1,18 +1,18 @@
 <div align="center">
 <h2>
-    MinuteMade: Speeding up Municipal Communication
+    MinuteMate: Speeding up Municipal Communication
 </h2>
 <img width="300" alt="teaser" src="assets\Fun_Logo.jpg">
 </div>
 
 ## 📄 Project Overview
-MinuteMade improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.
+MinuteMate improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.
 
 ---
 
 ## 🛠️ How to Use
 
-To use the 'minutemade' library, follow the steps below for different tasks:
+To use the 'minutemate' library, follow the steps below for different tasks:
 
 ### 📝 Transcribe Audio
 
