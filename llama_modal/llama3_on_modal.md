@@ -64,7 +64,7 @@ modal deploy llama_on_modal/api.py
 
 This will then provide you a URL endpoint: <https://your-workspace-name--vllm-openai-compatible-serve.modal.run>
 
-![Example of a successful Modal deployment](docs/modal-deploy.png)
+![Example of a successful Modal deployment](llama_modal/modal-deploy.png)
 
 You can view the Swagger API doc at <https://your-workspace-name--vllm-openai-compatible-serve.modal.run/docs>
 

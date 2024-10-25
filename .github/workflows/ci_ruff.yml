@@ -1,0 +1,13 @@
+# Ruff checks for good code style
+
+name: Ruff
+on: [push, pull_request]
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v1
+        with:
+          #Affects only changed files
+          changed-files: "true"

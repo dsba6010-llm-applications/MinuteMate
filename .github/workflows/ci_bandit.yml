@@ -6,13 +6,7 @@
 # https://pypi.org/project/bandit/ is Apache v2.0 licensed, by PyCQA
 
 name: Bandit
-on:
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main" ]
-  schedule:
-    - cron: '21 0 * * 0'
-
+on: [push, pull_request]
 jobs:
   bandit:
     permissions:
