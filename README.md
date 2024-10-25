@@ -2,7 +2,7 @@
 <h2>
     MinuteMate: Speeding up Municipal Communication
 </h2>
-<img width="300" alt="teaser" src="assets\Fun_Logo.jpg">
+<img width="300" alt="A fun logo" src="assets\Fun_Logo.jpg">
 </div>
 
 # 📄 Project Overview
@@ -17,6 +17,8 @@ MinuteMate improves how municipalities communicate with their citizens by simpli
 * [Llama on Modal](/llama_modal/Llama3_modal_serving.md): An option for serving an LLM.
 * [Streamlit frontend for Llama](/streamlit_modal/streamlit_on_modal.md): A limited front-end for interacting with a Modal-hosted LLM 
 * [Notebooks](/notebooks/prompting_with_modal.ipynb): A notebook for Python-based prompting for testing purposes
+
+<img width="800" alt="A system diagram covering both the preprocessing pipeline and the prompt and response processes" src="assets\System_Diagram.svg">
 
 
 # 🛠️ How to Use MinuteMate
