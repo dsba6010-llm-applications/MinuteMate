@@ -4,7 +4,7 @@ from handler import transcribe_with_whisper, diarize_audio
 import time
 
 # Load SVG content from the file in the same directory
-with open("Temp Logo.svg", "r") as svg_file:
+with open("assets/Temp Logo.svg", "r") as svg_file:
     svg_content = svg_file.read()
 
 # Set page configuration
