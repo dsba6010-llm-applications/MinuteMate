@@ -5,7 +5,6 @@ import os
 import streamlit as st
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from pyannote.audio import Pipeline  # Import Diarization Pipeline
-import time
 
 # Load Whisper model and processor directly from Hugging Face
 model_name = "openai/whisper-small"

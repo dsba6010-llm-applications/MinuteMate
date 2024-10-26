@@ -115,7 +115,7 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # SVG Icon
-st.markdown(f"""
+st.markdown("""
 <div class="svg-container">
     {svg_content}
 </div>
@@ -152,7 +152,9 @@ if uploaded_file is not None:
             transcription_data = transcribe_with_whisper(uploaded_file)
 
             if transcription_data:  # Check if transcription data is valid
-                st.markdown(f'<div class="transcription-box">{"\n".join(transcription_data)}</div>', unsafe_allow_html=True)
+                # Build the HTML for transcription display
+                transcription_html = f"<div style='text-align: center; font-family: IBM Plex Mono, monospace;'>{'<br>'.join(transcription_data)}</div>"
+                st.markdown(transcription_html, unsafe_allow_html=True)
                 st.success("Transcription completed!")
             else:
                 st.error("Transcription failed. Please check your audio file or conversion process.")
