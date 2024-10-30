@@ -1,0 +1,9 @@
+name: Pyright
+on: [push, pull_request]
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jakebailey/pyright-action@v2
+        with:
+          version: 2.3.2
