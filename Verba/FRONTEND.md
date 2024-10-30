@@ -4,15 +4,7 @@ Verba's Frontend is a [NextJS](https://nextjs.org/) application used together wi
 
 ## 🚀 Setting Up the Frontend
 
-To get your local copy of the Verba frontend up and running, please follow these simple steps:
-
-1. Clone Repository
-
-```git
-
-git clone https://github.com/weaviate/Verba.git
-
-```
+To get your local copy of the MinuteMate-Verba frontend up and running, please follow these simple steps:
 
 1. **Node.js Requirement**:
 
@@ -26,6 +18,8 @@ git clone https://github.com/weaviate/Verba.git
 3. **Development Server**:
    - Launch the application in development mode by executing `npm run dev`.
    - Open your web browser and visit `http://localhost:3000` to view the application.
+
+4. **Clone Repository**
 
 ## 📦 Building Static Pages for FastAPI
 
