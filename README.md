@@ -5,23 +5,26 @@
 <img width="300" alt="A fun logo" src="assets\Fun_Logo.jpg">
 </div>
 
-# 📄 Project Overview
+# 📄 Overview
 
 MinuteMate improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.
 
-## Components of MinuteMate
-* AV->Text Preprocessing Pipeline with Whisper: Includes transcription of audio to text as well as attribution of text to specific speakers.
-* [Verba+Weaviate](https://github.com/dsba6010-llm-applications/MinuteMate/blob/main/Verba/README.md): Provides RAG preprocessing of text files (from document management and tokenization to vector embedding), vector database hosting with Weaviate, and a prompting interface. The Verba frontend and Weaviate vector database backend are deployed together, optionally via a single Dockerfile.  They must be supported by LLM integrations for vector embedding and for prompting (these need not be the same).
-* [Llama on Modal](/llama_modal/Llama3_modal_serving.md): An option for serving an LLM.
-* [Streamlit frontend for Llama](/streamlit_modal/streamlit_on_modal.md): A limited front-end for interacting with a Modal-hosted LLM 
-* [Notebooks](/notebooks/prompting_with_modal.ipynb): A notebook for Python-based prompting for testing purposes
+## Diagram
 
 <img width="800" alt="A system diagram covering both the preprocessing pipeline and the prompt and response processes" src="assets\System_Diagram.svg">
 
-# 🛠️ Documentation
+##  Components
 
-[Whisper AV->Text Preprocessing Pipeline](Audio-Text/WHISPER_AV_TO_TEXT.md) - this includes a preprocessing pipeline to convert audiovisual information to text so that it can be cleaned and ingested into the RAG preprocessing pipeline in MinuateMate-Verba. 
+* [Whisper AV->Text Preprocessing Pipeline](Audio-Text/WHISPER_AV_TO_TEXT.md): A preprocessing pipeline to convert audiovisual information to text so that it can be cleaned and ingested into the RAG preprocessing pipeline in MinuateMate-Verba. 
 
-[MinuteMate-Verba](Verba/VERBA.md) - this includes primary front-end of the app (based on Verba) and its integrations as well as a local deployment option of the vector database Weaviate.
+* [MinuteMate-Verba](Verba/VERBA.md) - the core of the app, based on Weaviate's [Verba](https://github.com/weaviate/Verba).  This includes the front end and back end (or integrations) for the RAG document management and pre-processing pipeline and the chat interface as well as a local deployment option of the vector database Weaviate.  At minimum, it relies on external integrations for the vector embedding model and for the prompting/chat model.  The Verba frontend and Weaviate vector database backend can be deployed together via a single Dockerfile.
+
+* [Llama on Modal](/llama_modal/Llama3_modal_serving.md): An option for serving an LLM on Modal.
+
+* [Notebooks](notebooks/): This will include notebooks for testing or interacting with various components of the app.
+
+* [Streamlit frontend for Llama](streamlit_modal/streamlit_on_modal.md): A limited front-end for interacting with a Modal-hosted LLM.
+
+## 🛠️ Contributing
 
 [Contribution guidelines](docs/CONTRIBUTING.md) - Guidelines and instructions for contributing to the project
