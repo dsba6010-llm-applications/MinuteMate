@@ -1,5 +1,5 @@
 
-###Getting started with Git
+### Getting started with Git
 
 * Git is commonly described as a version control system.  It is also the core component a system for managing changes from one version to another.
 * Everyone uses Git, but [nobody understands it](https://xkcd.com/1597/) due to counterintuitive terminology.  This is fine.  Follow the instructions, and after a few iterations, you'll get the hang of it.
@@ -8,7 +8,7 @@
 * Remember that you must select which branch you're on. 
 * Control + Shift + P to open Git commands
 
-###Steps to make a contribution to the project
+### Steps to make a contribution to the project
 
 1. **Clone or rebase** Clone the main branch of the repository to a project folder on your local drive.  This copies the entire project to a local repository on your hard drive.  If you already have the main branch cloned, rebase to the most up-to-date version of the main branch.
 2. **Create new branch** From the local clone of the main branch, create a new branch for your changes.  Use a new branch for each contribution.  Name branches using snake-case.  Use short, meaningful, descriptive names related to the change you're making.
@@ -21,7 +21,7 @@
 
 TODO: Merge conflicts aren't addressed here yet
 
-###Key Terms & Context
+### Key Terms & Context
 
 **.gitignore** - this file indicates what files/folders will *not* be uploaded to GitHub.
 

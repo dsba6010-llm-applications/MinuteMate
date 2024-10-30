@@ -24,4 +24,4 @@ MinuteMate improves how municipalities communicate with their citizens by simpli
 
 [MinuteMate-Verba](Verba/VERBA.md) - this includes primary front-end of the app (based on Verba) and its integrations as well as a local deployment option of the vector database Weaviate.
 
-[Contributing to the project](docs/CONTRIBUTING.md)
+[Contribution guidelines](docs/CONTRIBUTING.md) - Guidelines and instructions for contributing to the project
