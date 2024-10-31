@@ -1,70 +1,73 @@
 ## Overview of Verba
 
+Verba provides a framework for a RAG application.  The implementation in this project will be limited and modified.  For detailed information about Verba, see the [Verba](https://github.com/weaviate/Verba/blob/main/README.md) repository. 
+
 ### Key Components & Integration Options 
 
-Input Data Source (Optional): 
+**Ingestion Capabilities and Integrations**: 
+- Capabilities: .PDF, .CSV/.XLSX, .DOCX, and GitHub/GitLab  
+- Integrations: [Unstructured](https://unstructured.io/) data, [Firecrawl](https://www.firecrawl.dev/) web crawler, [AssemblyAI](https://assemblyai.com/) multi-modal import
 
-Embedding Model: Weaviate, Ollama, SentenceTransformers, Cohere, VoyageAI, OpenAI
+**Chunking Techniques**: 
+- spaCy Token & Sentence, 
+- Semantic, 
+- Recursive rule-based, 
+- Code: HTML, Markdown, Code, JSON
 
-Chat Model: Ollama, Huggingface, Cohere, Anthropic, OpenAI, Groq
+**Embedding Model Integrations**: Weaviate, Ollama, SentenceTransformers, Cohere, VoyageAI, OpenAI
 
-Vector Database: Weaviate (docker), Weaviate (SaaS)
+**Vector Database Integrations**: Weaviate (docker), Weaviate (SaaS)
 
-### Preprocessing Pipelines
-
-Import workflows: Unstructured, Firecrawl, GitHub/GitLab, AssemblyAI (Multi-Modal), .PDF, .CSV/.XLSX, .DOCX 
-
-### NLP and Chunking Techniques
-
-Chunking Techniques: spaCy Token, spaCy Sentence, Semantic, Recursive rule-based, HTML, Markdown, Code, JSON
+**Chat Model Integrations**: Ollama, Huggingface, Cohere, Anthropic, OpenAI, Groq
 
 ### RAG Features
 
 Vector DB Search: Keyword, Semantic, Hybrid
-
 Autocomplete Suggestion
-
 Filtering
-
 Customizable Metadata
-
 Async Ingestion
-
 RAG pipeline in LangChain
 
+## Deploying Verba Locally with Docker
+See Verba docs for other deployment options
 
-## Deploying Verba
+1. Preparation:
+- Install Docker Desktop
+- Make sure Docker Desktop is running
+- Clone the project repository
 
-1. Install Docker
+2. Set up required external components and place API keys in a .env file in Verba/goldenverba.  You can base this on [Verba/goldenverba/.env.example](/Verba/goldenverba/.env.example).  
 
-2. Clone the project
+3. You can use the `docker-compose.yml` to add required environment variables under the `verba` service and can also adjust the Weaviate Docker settings to enable Authentification or change other settings of your database instance. You can read more about the Weaviate configuration in our [docker-compose documentation](https://weaviate.io/developers/weaviate/installation/docker-compose)
 
-3. Set up API keys in a .env file.  You can base this on Verba/goldenverba/.env.example file. 
+> Please make sure to only add environment variables that you really need.
 
-4. Docker stuff
+4. From the Verba folder, run the following commands to download the necessary Docker images, create containers, and start Verba:
 
-
+```bash
+docker compose up -d
 ```
-docker compose --env-file <your-env-file> up -d --build
+
+```bash
+docker compose --env-file goldenverba/.env up -d --build
 ```
 
-### API Keys
+5. Access Verba and Weaviate via web browser:
 
-You can set all API keys in the Verba frontend, but to make your life easier, we can also prepare a `.env` file in which Verba will automatically look for the keys. Create a `.env` in the same directory you want to start Verba in. You can find an `.env.example` file in the [goldenverba](./goldenverba/.env.example) directory.
+- You can access the Verba frontend at `localhost:8000`
 
-### Vector Database Options
+- You can also access your local Weaviate instance at `localhost:8080`
 
-Verba provides flexibility in connecting to Weaviate instances based on your needs. You have three options:
+6.  Select deployment type
 
-1. **Local Deployment**: Use Weaviate Embedded which runs locally on your device (except Windows, choose the Docker/Cloud Deployment)
-2. **🐳 Docker Deployment**: Choose this option when you're running Verba's Dockerfile.
-3. **🌩️ Cloud Deployment**: Use an existing Weaviate instance hosted on S WCD to run Verba. [Weaviate Cluster Setup Guide](https://weaviate.io/developers/wcs/guides/create-instance)
+- **🐳 Docker Deployment** - using a separate Weaviate instance that is running inside the same Docker network, which is deployed when using Verba's default Dockerfile.
+- **🌩️ Weaviate Cloud Deployment** - using a Weaviate instance that is hosted on Weaviate Cloud Services (WCS).  [Weaviate Cluster Setup Guide](https://weaviate.io/developers/wcs/guides/create-instance)
+- **Custom Deployment** - allows you to specify your own Weaviate instance URL, PORT, and API key.
 
-![Deployment in Verba](https://github.com/weaviate/Verba/blob/2.0.0/img/verba_deployment.png)
+## Deploying Local Models w/ Ollama
 
-## Local Models w/ Ollama
-
-Verba supports Ollama models. Download and Install Ollama on your device (https://ollama.com/download). Make sure to install your preferred LLM using `ollama run <model>`.
+Verba supports Ollama models. Download and Install Ollama on your device (https://ollama.com/download). Make sure to install/run your preferred LLM using `ollama run <model>`.
 
 Tested with `llama3`, `llama3:70b` and `mistral`. The bigger models generally perform better, but need more computational power.
 
