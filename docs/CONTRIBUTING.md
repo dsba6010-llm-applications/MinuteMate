@@ -29,4 +29,6 @@ TODO: Merge conflicts aren't addressed here yet
 
 **Continuous integration** - a set of practices that enables fast, safe development, even in very complex projects.  These practices emphasize integrating small, simple changes quickly, and making this practice safer through the use of fast automated code tests.  These automated tests generally consist of two main types: general, off-the-shelf tests that catch common problems like code style or security issues, and project-specific tests that look for expected functionality.
 
+**Guidelines for CI-CD** - CI/CD, which stands for continuous integration and continuous delivery/deployment, aims to streamline and accelerate the software development lifecycle. Continuous integration (CI) refers to the practice of automatically and frequently integrating code changes into a shared source code repository. 
+
 TODO: Expand list of terms, add FAQ
