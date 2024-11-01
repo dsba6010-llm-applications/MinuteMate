@@ -24,21 +24,24 @@ DSBA_LLAMA3_KEY="<SECRET_VALUE>"
 MODAL_BASE_URL="https://<MODAL WORKSPACE>--vllm-openai-compatible-serve.modal.run/v1/"
 
 
-## 4 Virtual Environment
+## 4 Set Up Virtual Environment
 
-Change directory to the root folder of your local project.
+Change directory to the root folder of the local project and move to the Llama_On_Modal folder
 
 Assuming Python 3.10:
 
 ```python
 python3.10 -m venv venv        # Adjust for Python version - 3.11 also works
-
+```
 #Depending on OS, one of the following:
+```
 source venv/bin/activate       # Mac 
 venv\Scripts\activate          # Windows CMD
 .\venv\Scripts\activate.ps1    # Windows Powershell
+```
 
 #All operating systems:
+```
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
@@ -59,7 +62,7 @@ You should receive a `Web authentication finished successfully!` message.
 After supplying the secret in Modal, you should be able to run the following command with no error:
 
 ```bash
-modal deploy llama_on_modal/api.py
+modal deploy api.py
 ```
 
 This will then provide you a URL endpoint: <https://your-workspace-name--vllm-openai-compatible-serve.modal.run>
