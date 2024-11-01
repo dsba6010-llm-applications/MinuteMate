@@ -1,71 +1,65 @@
-## Overview of Verba
+# Overview of MinuteMate-Verba
 
-Verba provides a framework for a RAG application.  The implementation in this project will be limited and modified.  For detailed information about Verba, see the [Verba](https://github.com/weaviate/Verba/blob/main/README.md) repository. 
+Verba provided a framework for a RAG application, and we have modified this to create MinuteMate.  For detailed information about Verba, see the [Verba](https://github.com/weaviate/Verba/) repo. 
 
-### Key Components & Integration Options 
+# Deploying MinuteMate-Verba
 
-**Ingestion Capabilities and Integrations**: 
-- Capabilities: .PDF, .CSV/.XLSX, .DOCX, and GitHub/GitLab  
-- Integrations: [Unstructured](https://unstructured.io/) data, [Firecrawl](https://www.firecrawl.dev/) web crawler, [AssemblyAI](https://assemblyai.com/) multi-modal import
-
-**Chunking Techniques**: 
-- spaCy Token & Sentence, 
-- Semantic, 
-- Recursive rule-based, 
-- Code: HTML, Markdown, Code, JSON
-
-**Embedding Model Integrations**: Weaviate, Ollama, SentenceTransformers, Cohere, VoyageAI, OpenAI
-
-**Vector Database Integrations**: Weaviate (docker), Weaviate (SaaS)
-
-**Chat Model Integrations**: Ollama, Huggingface, Cohere, Anthropic, OpenAI, Groq
-
-### RAG Features
-
-Vector DB Search: Keyword, Semantic, Hybrid
-Autocomplete Suggestion
-Filtering
-Customizable Metadata
-Async Ingestion
-RAG pipeline in LangChain
-
-## Deploying Verba Locally with Docker
-See Verba docs for other deployment options
+## Local Docker Deployment
+*See Verba docs for other deployment options*
 
 1. Preparation:
 - Install Docker Desktop
 - Make sure Docker Desktop is running
 - Clone the project repository
 
-2. Set up required external components and place API keys in a .env file in Verba/goldenverba.  You can base this on [Verba/goldenverba/.env.example](/Verba/goldenverba/.env.example).  
+2. Set up required external components and obtain any necessary URLs and API keys.  See the **External Dependencies** section below for more details.
+- Ingestion: If you're importing files in .PDF, .CSV/.XLSX, .DOCX, or other text-based formats, there are no external dependencies.  If you're preprocessing audio data, you will need a transcription service, and AssemblyAI is currently the only integration available.  For other ingestion options such as web crawling and unstructured data, see the Verba documentation.
+- Vector database: always required.  Weaviate is currently the only option, but can be deployed in a few ways.  This document covers only the Weaviate Cloud option.
+- Embedding model service: always required. This must be the same as the embedding model used to populate the vector database.
+- Generative model service: always required. This can be whichever chat model or service you prefer.
 
-3. You can use the `docker-compose.yml` to add required environment variables under the `verba` service and can also adjust the Weaviate Docker settings to enable Authentification or change other settings of your database instance. You can read more about the Weaviate configuration in our [docker-compose documentation](https://weaviate.io/developers/weaviate/installation/docker-compose)
+3. Place all required URLs and API keys in a .env file in the Verba folder.  You can base this on '.env.example'; simply rename the file to .env and add relevant variables.  These variables are passed along to the Docker container environment as specified in `docker-compose.yml`.  So if you need to add variables to that environment, you must add them in both your .env file and in 'docker-compose.yml'.  
 
 > Please make sure to only add environment variables that you really need.
 
-4. From the Verba folder, run the following commands to download the necessary Docker images, create containers, and start Verba:
-
-```bash
-docker compose up -d
-```
+4. From the Verba folder, run the following command to create a Docker images, create a container, and start Verba within that container:
 
 ```bash
 docker compose --env-file goldenverba/.env up -d --build
 ```
 
-5. Access Verba and Weaviate via web browser:
-
+5. Access Verba interface via web browser:
 - You can access the Verba frontend at `localhost:8000`
 
-- You can also access your local Weaviate instance at `localhost:8080`
-
 6.  Select deployment type
+- Select **🌩️ Weaviate Cloud Deployment** - using a Weaviate instance that is hosted on Weaviate Cloud Services (WCS).  [Weaviate Cluster Setup Guide](https://weaviate.io/developers/wcs/guides/create-instance)
+- For other deployment options, see the Verba documentation.
 
-- **🐳 Docker Deployment** - using a separate Weaviate instance that is running inside the same Docker network, which is deployed when using Verba's default Dockerfile.
-- **🌩️ Weaviate Cloud Deployment** - using a Weaviate instance that is hosted on Weaviate Cloud Services (WCS).  [Weaviate Cluster Setup Guide](https://weaviate.io/developers/wcs/guides/create-instance)
-- **Custom Deployment** - allows you to specify your own Weaviate instance URL, PORT, and API key.
+# External Dependencies 
 
-## Deploying Local Models w/ Ollama
+## Preprocessing Audio Data
+
+### AssemblyAI
+
+[AssemblyAI](https://assemblyai.com/) provides transcription services.
+
+## Vector Database
+
+### Weaviate
+
+You can read more about the Weaviate configuration in our [docker-compose documentation](https://weaviate.io/developers/weaviate/installation/docker-compose)
+
+## Embedding and Generative Models
+
+**Embedding Model Integrations**: Weaviate, Ollama, SentenceTransformers, Cohere, VoyageAI, OpenAI
+
+**Chat Model Integrations**: Ollama, Huggingface, Cohere, Anthropic, OpenAI, Groq
+
+### Deploying Llama on Modal 
+
+See the [Llama_On_Modal](/Llama_On_Modal/README.md) component of this project.
+
+### Deploying Local Models w/ Ollama
 
 Verba supports Ollama models. Download and Install Ollama on your device (https://ollama.com/download). Make sure to install/run your preferred LLM using `ollama run <model>`.
 
