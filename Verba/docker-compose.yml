@@ -8,15 +8,17 @@ services:
     ports:
       - 8000:8000
     environment:
-      - WEAVIATE_URL_VERBA=http://weaviate:8080
-      - OPENAI_API_KEY=$OPENAI_API_KEY
-      # - COHERE_API_KEY=$COHERE_API_KEY
-      # - OLLAMA_URL=http://host.docker.internal:11434
-      # - OLLAMA_MODEL=$OLLAMA_MODEL
-      # - OLLAMA_EMBED_MODEL=$OLLAMA_EMBED_MODEL
-      # - UNSTRUCTURED_API_KEY=$UNSTRUCTURED_API_KEY
-      # - UNSTRUCTURED_API_URL=$UNSTRUCTURED_API_URL
-      # - GITHUB_TOKEN=$GITHUB_TOKEN
+      #See .env.example or the Verba docs for more information about environmental variables
+      
+      # Audio transcription service - for multimodal only - otherwise comment out
+      - ASSEMBLYAI_API_KEY = $ASSEMBLYAI_API_KEY
+
+      # Vector database - API key needed only for cloud deployments 
+      - WEAVIATE_URL_VERBA = $WEAVIATE_URL_VERBA
+      - WEAVIATE_API_KEY_VERBA = $WEAVIATE_API_KEY_VERBA
+
+      # Using OpenAI for embeddings and generation - for dev purposes only
+      - OPENAI_API_KEY = $OPENAI_API_KEY
 
     volumes:
       - ./data:/data/
