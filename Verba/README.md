@@ -25,7 +25,7 @@ Verba provided a framework for a RAG application, and we have modified this to c
 4. From the Verba folder, run the following command to create a Docker images, create a container, and start Verba within that container:
 
 ```bash
-docker compose --env-file goldenverba/.env up -d --build
+docker compose --env-file .env up -d --build
 ```
 
 5. Access Verba interface via web browser:
