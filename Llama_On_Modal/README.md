@@ -1,65 +1,73 @@
-# Serving Llama3 with Modal
+## Serving Llama3 with Modal
 
-## 1 Account Setup
+### Preparation
 
-Make sure you have signed up for a [Modal account](https://modal.com/).
+- Sign up for a [Modal account](https://modal.com/).
+- Clone this repository to establish a local project
 
-## 2 Local Repository
-
-Clone this repository to establish a local project
-
-## 3 Secrets
+### Set Up Secrets
 
 To allow secure communication, you need to set up a shared secret both server-side (in Modal, where the LLM is hosted) and client-side, wherever you're going to query the LLM, whether that's locally from the command line, locally from an IDE like vscode, or from a notebook platform like Colab. 
 
-### Server-side
+1. Go to **Modal** → **Your account** → **Dashboard** → **Secrets** and select **creating a Custom Secret**.  Create a Custom Secret with:
+- Key: DSBA_LLAMA3_KEY 
+- Value: <A secret string of characters>
+- Name: dsba-llama3-key
 
-Go to **Modal** → **Your account** → **Dashboard** → **Secrets** and select **creating a Custom Secret**.  Create a Custom Secret with key=DSBA_LLAMA3_KEY and value = the secret value shared among the team.
+2. Create a .env file in this folder. Add two environmental variables:
 
-### Client-side
-
-In your local project .env file (or equivalent repository for secrets) add two environmental variables:
-
+```
 DSBA_LLAMA3_KEY="<SECRET_VALUE>"
 MODAL_BASE_URL="https://<MODAL WORKSPACE>--vllm-openai-compatible-serve.modal.run/v1/"
+```
 
+### Set Up Virtual Environment
 
-## 4 Set Up Virtual Environment
+1. Open a command line interface in this folder.  
 
-Change directory to the root folder of the local project and move to the Llama_On_Modal folder
-
-Assuming Python 3.10:
+2. Create a virtual environment using venv.  Assuming Python 3.10:
 
 ```python
 python3.10 -m venv venv        # Adjust for Python version - 3.11 also works
 ```
-#Depending on OS, one of the following:
+
+3. Activate your virtual environment with one of the following commands:
 ```
 source venv/bin/activate       # Mac 
+```
+
+```
 venv\Scripts\activate          # Windows CMD
+```
+
+```
 .\venv\Scripts\activate.ps1    # Windows Powershell
 ```
 
-#All operating systems:
+4. Upgrade pip (optional, but good practice) 
 ```
 python -m pip install --upgrade pip
+```
+
+5. Install required packages:
+```
 python -m pip install -r requirements.txt
 ```
 
-## 5 Modal Setup
+### Set Up and Deploy Modal
 
-```python
+1. Set up Modal:
+
+```
 python -m modal setup
 ```
 
-A browser window will open and you should select your Modal account. 
+2. A browser window will open.  Select your Modal account. 
 
 You should receive a `Web authentication finished successfully!` message.
 
 
-## 6 Modal Deployment
-
-After supplying the secret in Modal, you should be able to run the following command with no error:
+3. Deploy Modal
 
 ```bash
 modal deploy api.py
@@ -72,7 +80,7 @@ This will then provide you a URL endpoint: <https://your-workspace-name--vllm-op
 You can view the Swagger API doc at <https://your-workspace-name--vllm-openai-compatible-serve.modal.run/docs>
 
 
-## 7 Run Test
+### Run Test
 
 Now, you can run a test to ensure setup was successful and the model is being served:
 
