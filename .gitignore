@@ -164,6 +164,7 @@ cython_debug/
 # VSCode
 .vscode
 
+
 #From Verba
 .DS_Store
 ~
@@ -175,3 +176,27 @@ cache.txt
 .ruff_cache
 *_secrets.json
 ollama
+*.pem
+# vercel
+.vercel
+# next.js
+/.next/
+/out/
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+
+
+
+
+
+
+
+
+
+
