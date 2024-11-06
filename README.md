@@ -9,7 +9,7 @@
 
 MinuteMate improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.
 
-## Diagram
+## System Design Target
 
 <img width="800" alt="A system diagram covering both the preprocessing pipeline and the prompt and response processes" src="docs\system_diagram.svg">
 
