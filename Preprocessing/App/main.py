@@ -1,7 +1,9 @@
+# Standard Python imports
 import os
 import sys
+
+# Load environment variables and set Python path
 from dotenv import load_dotenv
-from datetime import datetime
 
 # Load environment variables from .env
 load_dotenv()
@@ -11,7 +13,8 @@ python_path = os.getenv("PYTHONPATH")
 if python_path:
     sys.path.append(python_path)
 
-
+# Now import all other dependencies
+from datetime import datetime
 import streamlit as st
 import weaviate  # Import Weaviate client
 from preprocessing_pipeline.pdf_conversion import convert_pdf_to_text
