@@ -1,0 +1,20 @@
+# Environment variables management
+python-dotenv==1.0.0
+
+# Audio transcription
+assemblyai==0.35.1
+
+# Vector database (Weaviate client)
+weaviate-client==4.7.1
+
+# Embedding and generation services
+openai==1.54.3
+
+# Streamlit for web UI
+streamlit==1.16.0
+
+# PDF handling (for PDF to text conversion)
+PyMuPDF==1.18.19
+
+# OpenAI API client (if you're using GPT models for text cleaning)
+openai==1.54.3
