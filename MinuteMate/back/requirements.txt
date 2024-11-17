@@ -1,0 +1,9 @@
+# Necessary for the API
+fastapi[standard]
+
+# Necessary for the API
+# Handles data validation, parsing, error handling, conversions, type hints
+pydantic
+
+# Necessary for web stuff
+uvicorn
