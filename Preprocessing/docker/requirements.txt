@@ -11,10 +11,10 @@ weaviate-client==4.7.1
 openai==1.54.3
 
 # Streamlit for web UI
-streamlit==1.16.0
+streamlit
 
 # PDF handling (for PDF to text conversion)
-PyMuPDF==1.18.19
+PyMuPDF
 
-# OpenAI API client (if you're using GPT models for text cleaning)
-openai==1.54.3
+# azure portal
+azure.storage.blob
