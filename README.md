@@ -31,14 +31,14 @@ MinuteMate improves how municipalities communicate with their citizens by simpli
 - Set up a RAG database (usually a vector database)
 - Preprocess your corpus to populate the RAG database 
 - Deploy the backend to handle prompt and response logic 
-- Deploy the frontend 
+- Deploy the frontend to present a prompt/response interface to users
 
 ### 💡 Meet the Team
 
-- Aboli Kasar - [LinkedIn](https://www.linkedin.com/in/abolikasar)|
-- Yash Pradhan - [LinkedIn](https://www.linkedin.com/in/iamyashpradhan/)|
-- Riley LePrell - [LinkedIn](https://www.linkedin.com/in/riley-leprell)|
-- Neal Logan - [LinkedIn](https://www.linkedin.com/in/nealdlogan))
+- **Aboli Kasar** - [LinkedIn](https://www.linkedin.com/in/abolikasar)
+- **Yash Pradhan** - [LinkedIn](https://www.linkedin.com/in/iamyashpradhan/)
+- **Riley LePrell** - [LinkedIn](https://www.linkedin.com/in/riley-leprell)
+- **Neal Logan** - [LinkedIn](https://www.linkedin.com/in/nealdlogan)
 
 ### 🛠️ How To Contribute
 
