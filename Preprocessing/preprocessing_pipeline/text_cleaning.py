@@ -1,5 +1,6 @@
 import os
 from openai import OpenAI
+import tiktoken  # Use tiktoken for OpenAI-compatible tokenization
 from utils.env_setup import load_env
 from utils.azure_blob_utils import download_from_azure, upload_to_azure
 
@@ -7,9 +8,12 @@ from utils.azure_blob_utils import download_from_azure, upload_to_azure
 load_env()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def split_text(text, max_chunk_size=3000):
+# Initialize tiktoken for OpenAI's GPT models
+tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")  # Specify the OpenAI model
+
+def tokenize_and_split_text(text, max_chunk_size=250):
     """
-    Splits a large text into smaller chunks, each within the specified token size.
+    Tokenizes and splits text into smaller chunks within the token size limit.
 
     Args:
         text (str): The text to split.
@@ -18,22 +22,14 @@ def split_text(text, max_chunk_size=3000):
     Returns:
         list of str: List of smaller text chunks.
     """
-    chunks = []
-    words = text.split()
-    chunk = []
-    current_size = 0
+    # Tokenize the text into tokens
+    tokens = tokenizer.encode(text)
 
-    for word in words:
-        current_size += len(word) + 1  # +1 accounts for spaces
-        if current_size > max_chunk_size:
-            chunks.append(" ".join(chunk))
-            chunk = []
-            current_size = len(word) + 1
-        chunk.append(word)
-
-    if chunk:
-        chunks.append(" ".join(chunk))
-
+    # Split tokens into chunks of max_chunk_size
+    chunks = [
+        tokenizer.decode(tokens[i:i + max_chunk_size])
+        for i in range(0, len(tokens), max_chunk_size)
+    ]
     return chunks
 
 def clean_text_chunk(chunk):
@@ -56,7 +52,7 @@ def clean_text_chunk(chunk):
     ]
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=messages,
         max_tokens=2000,
         temperature=0.5
@@ -76,8 +72,8 @@ def clean_text(dirty_file_name):
     print(f"Downloading {dirty_file_name} from Azure Blob Storage...")
     dirty_content = download_from_azure("dirty", dirty_file_name)
     
-    # Split the text into chunks
-    chunks = split_text(dirty_content, max_chunk_size=3000)
+    # Tokenize and split the text into chunks of 250 tokens
+    chunks = tokenize_and_split_text(dirty_content, max_chunk_size=250)
     cleaned_chunks = []
 
     for i, chunk in enumerate(chunks):

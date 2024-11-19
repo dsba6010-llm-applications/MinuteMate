@@ -18,3 +18,7 @@ PyMuPDF
 
 # azure portal
 azure.storage.blob
+
+transformers
+
+chardet

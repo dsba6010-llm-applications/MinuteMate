@@ -1,5 +1,7 @@
-import weaviate
 import os
+from openai import OpenAI
+import weaviate
+import tiktoken  # Use tiktoken for OpenAI-compatible tokenization
 from utils.env_setup import load_env
 from utils.azure_blob_utils import download_from_azure
 
@@ -7,37 +9,50 @@ from utils.azure_blob_utils import download_from_azure
 load_env()
 WEAVIATE_URL = os.getenv("WEAVIATE_URL")
 WEAVIATE_API_KEY = os.getenv("WEAVIATE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Set up the Weaviate client with API key authentication
+# Initialize Weaviate client
 client = weaviate.Client(
     url=WEAVIATE_URL,
     auth_client_secret=weaviate.AuthApiKey(api_key=WEAVIATE_API_KEY)
 )
 
-def process_and_embed_text(clean_file_name, metadata, chunk_size=500):
-    """
-    Combines chunking and embedding into a single process:
-    - Splits the cleaned text into smaller chunks.
-    - Embeds each chunk into Weaviate with metadata.
+# Initialize OpenAI client for embedding
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-    Parameters:
-    - clean_file_name: str, name of the cleaned text file in Azure Blob Storage (clean folder).
-    - metadata: dict, metadata associated with each chunk (e.g., meeting date, type, etc.).
-    - chunk_size: int, number of words per chunk.
+# Initialize tiktoken for OpenAI's embedding model
+tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
+
+def tokenize_and_embed_text(clean_file_name, metadata, max_chunk_size=250):
+    """
+    Tokenizes, chunks, and embeds cleaned text into Weaviate.
+
+    Args:
+        clean_file_name (str): Name of the cleaned text file in Azure Blob Storage (clean folder).
+        metadata (dict): Metadata associated with the file (meeting_date, meeting_type, file_type).
+        max_chunk_size (int): Maximum token size for each chunk.
     """
     try:
-        # Step 1: Download the cleaned text from Azure and chunk it
-        print(f"Downloading and chunking the text from {clean_file_name}...")
+        # Step 1: Download cleaned text from Azure
         clean_text = download_from_azure("clean", clean_file_name)
-        words = clean_text.split()
-        chunks = [" ".join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+        print(f"Downloaded cleaned text from Azure for file: {clean_file_name}")
 
-        # Extract metadata
+        # Step 2: Tokenize the text using tiktoken
+        tokens = tokenizer.encode(clean_text)
+
+        # Step 3: Chunk tokens into groups of max_chunk_size (default: 250 tokens per chunk)
+        chunks = [
+            tokenizer.decode(tokens[i:i + max_chunk_size])
+            for i in range(0, len(tokens), max_chunk_size)
+        ]
+        print(f"Tokenized and split text into {len(chunks)} chunks of {max_chunk_size} tokens each.")
+
+        # Extract metadata for embedding
         meeting_date = str(metadata["meeting_date"])
         meeting_type = metadata["meeting_type"]
         file_type = metadata["file_type"]
 
-        # Step 2: Check for existing documents in Weaviate with the same metadata and delete them
+        # Step 4: Check and delete existing embeddings in Weaviate (to prevent duplication)
         query = f"""
         {{
             Get {{
@@ -54,25 +69,34 @@ def process_and_embed_text(clean_file_name, metadata, chunk_size=500):
         response = client.query.raw(query)
         existing_documents = response.get("data", {}).get("Get", {}).get("MeetingDocument", [])
 
-        # Step 3: Delete any existing documents with matching metadata in Weaviate
         for doc in existing_documents:
             client.data_object.delete(doc["id"])
-        print(f"Deleted {len(existing_documents)} existing documents with matching metadata.")
+        print(f"Deleted {len(existing_documents)} existing embeddings for this file.")
 
-        # Step 4: Embed and store new chunks in Weaviate
-        for chunk in chunks:
+        # Step 5: Embed each chunk using OpenAI and store in Weaviate
+        for i, chunk in enumerate(chunks):
+            # Generate embedding using OpenAI
+            response = openai_client.embeddings.create(
+                input=chunk,
+                model="text-embedding-ada-002"
+            )
+            embedding = response.data[0].embedding  # Correctly access embedding from the response object
+
+            # Upload chunk to Weaviate
             client.data_object.create(
                 data_object={
                     "content": chunk,
                     "meeting_date": meeting_date,
                     "meeting_type": meeting_type,
-                    "file_type": file_type
+                    "file_type": file_type,
+                    "chunk_index": i  # Include chunk index for ordering
                 },
+                vector=embedding,
                 class_name="MeetingDocument"
             )
-            print(f"Embedded chunk for {clean_file_name} in Weaviate.")
+            print(f"Uploaded chunk {i+1}/{len(chunks)} to Weaviate.")
 
-        print(f"Successfully embedded {len(chunks)} chunks for {clean_file_name}.")
+        print("Successfully processed and embedded all chunks.")
 
     except Exception as e:
-        print(f"Error during chunking and embedding: {e}")
+        print(f"Error during tokenization and embedding: {e}")

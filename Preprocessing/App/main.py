@@ -20,7 +20,7 @@ import weaviate  # Import Weaviate client
 from preprocessing_pipeline.pdf_conversion import convert_pdf_to_text
 from preprocessing_pipeline.audio_transcription import transcribe_audio
 from preprocessing_pipeline.text_cleaning import clean_text
-from preprocessing_pipeline.chunking_vector_embedding import process_and_embed_text  
+from preprocessing_pipeline.chunking_vector_embedding import tokenize_and_embed_text
 from utils.azure_blob_utils import upload_to_azure, download_from_azure
 from utils.azure_blob_utils import list_blobs_in_folder, download_from_azure
 
@@ -227,7 +227,7 @@ def upload_files_page():
 
         # Stage 4: Chunk and Embed into Weaviate
         with st.spinner("Chunking and embedding text into Weaviate..."):
-            process_and_embed_text(clean_file_name, metadata)  # Call the combined chunking and embedding function
+            tokenize_and_embed_text(clean_file_name, metadata)  # Call the combined chunking and embedding function
         st.success("Document processed and embedded successfully!")
         progress_bar.progress(100)
 
