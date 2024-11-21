@@ -1,11 +1,10 @@
 # Standard Python imports
 import os
 import sys
+from datetime import datetime
 
 # Load environment variables and set Python path
 from dotenv import load_dotenv
-
-# Load environment variables from .env
 load_dotenv()
 
 # Set PYTHONPATH from .env if available
@@ -13,16 +12,18 @@ python_path = os.getenv("PYTHONPATH")
 if python_path:
     sys.path.append(python_path)
 
-# Now import all other dependencies
-from datetime import datetime
+# Import dependencies
 import streamlit as st
 import weaviate  # Import Weaviate client
 from preprocessing_pipeline.pdf_conversion import convert_pdf_to_text
 from preprocessing_pipeline.audio_transcription import transcribe_audio
 from preprocessing_pipeline.text_cleaning import clean_text
 from preprocessing_pipeline.chunking_vector_embedding import tokenize_and_embed_text
-from utils.azure_blob_utils import upload_to_azure, download_from_azure
-from utils.azure_blob_utils import list_blobs_in_folder, download_from_azure
+from utils.azure_blob_utils import (
+    upload_to_azure,
+    download_from_azure,
+    list_blobs_in_folder
+)
 
 # Set up Weaviate client
 client = weaviate.Client(
@@ -30,23 +31,22 @@ client = weaviate.Client(
     auth_client_secret=weaviate.AuthApiKey(api_key=os.getenv("WEAVIATE_API_KEY"))
 )
 
-# Generate standardized file names
+# Helper function: Generate standardized file names
 def generate_file_name(metadata, stage):
     meeting_date = metadata["meeting_date"].strftime("%Y_%m_%d")
     meeting_type = "BOC" if metadata["meeting_type"] == "Board of Commissioners" else "PB"
     file_type = metadata["file_type"]
     return f"{meeting_date}_{meeting_type}_{file_type}_{stage}"
 
-# Check and overwrite files in the local storage
+# Helper function: Check and overwrite files in local storage
 def save_file_with_overwrite(file_path, content):
     if os.path.exists(file_path):
         os.remove(file_path)  # Overwrite existing file
     with open(file_path, "w") as f:
         f.write(content)
 
-# Fetch documents from Weaviate
+# Helper function: Fetch documents from Weaviate
 def fetch_uploaded_documents():
-    # Query Weaviate for documents
     query = """
     {
       Get {
@@ -65,27 +65,24 @@ def fetch_uploaded_documents():
     documents = response.get("data", {}).get("Get", {}).get("Documents", [])
     return documents
 
-# Define pages
+# Home Page
 def home_page():
-    # Apply custom styling with IBM Plex Mono
-    st.markdown(f"""
+    # Custom styling with IBM Plex Mono
+    st.markdown("""
     <style>
-    /* Main Background and Flex Layout for Cover Screen */
-    .main {{
+    .main {
         background: #f0f2e9;
         font-family: 'IBM Plex Mono', monospace;
-    }}
-    .title-container {{
+    }
+    .title-container {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 50px;
         height: 50vh;
         flex-direction: column;
-    }}
-    
-    /* Title Text Styling */
-    .main-text {{
+    }
+    .main-text {
         font-size: 150px;
         color: #0D6051;
         opacity: 0.9;
@@ -93,36 +90,31 @@ def home_page():
         font-family: 'IBM Plex Mono', monospace;
         line-height: 1;
         text-align: center;
-    }}
-
-    /* Description Text */
-    .description {{
+    }
+    .description {
         font-family: 'IBM Plex Mono', monospace;
         font-size: 18px;
         color: #263d36;
         text-align: center;
         margin-top: 20px;
-    }}
-
-    /* Buttons */
-    .btn {{
+    }
+    .stButton>button {
         background-color: #0D6051;
         color: white;
         font-size: 25px;
-        padding: 20px 10px;
+        font-weight: bold;
+        padding: 15px 30px;
         border-radius: 10px;
-        text-align: center;
-        cursor: pointer;
         border: none;
-    }}
-
-    .btn:hover {{
+        cursor: pointer;
+    }
+    .stButton>button:hover {
         background-color: #2f8479;
-    }}
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"""
+    st.markdown("""
     <div class="title-container">
         <h1 class="main-text">Minute Mate</h1>
         <p class="description">
@@ -130,19 +122,17 @@ def home_page():
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Navigation buttons (centered)
-    col1, col2 = st.columns([1, 1])
 
+    # Navigation buttons
+    col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("Upload Files", key="upload", help="Upload meeting documents and audio files"):
             st.session_state.page = "upload"
-
     with col2:
         if st.button("View Documents", key="view", help="View the documents that have been uploaded"):
             st.session_state.page = "view"
 
-# Define pages
+# Upload Files Page
 def upload_files_page():
     st.title("Upload Municipal Meeting Documents")
     
@@ -172,7 +162,7 @@ def upload_files_page():
 
     if file and "metadata" in st.session_state:
         metadata = st.session_state["metadata"]
-        
+
         # Preserve the original file extension
         file_extension = os.path.splitext(file.name)[1]
         raw_file_name = f"{generate_file_name(metadata, 'Raw')}{file_extension}"
@@ -184,7 +174,6 @@ def upload_files_page():
 
         # Stage 2: Process based on file type
         if metadata["file_type"] == "Audio" and file_extension in [".mp3", ".wav"]:
-            # Transcribe audio
             with st.spinner(f"Transcribing audio using {metadata['model']} model..."):
                 transcribed_text = transcribe_audio(
                     raw_file_name=raw_file_name,
@@ -201,7 +190,6 @@ def upload_files_page():
                 st.error("Failed to transcribe the audio.")
 
         elif metadata["file_type"] in ["Agenda", "Minutes"] and file_extension == ".pdf":
-            # Extract text from PDF
             with st.spinner("Extracting text from PDF..."):
                 extracted_text = convert_pdf_to_text(raw_file_name)
             if extracted_text:
@@ -216,7 +204,7 @@ def upload_files_page():
         # Stage 3: Clean Text and Upload to Clean
         dirty_content = download_from_azure("dirty", dirty_file_name)
         with st.spinner("Cleaning text using generative AI..."):
-            cleaned_text = clean_text(dirty_file_name)  # Updated to handle chunked cleaning
+            cleaned_text = clean_text(dirty_file_name)
         clean_file_name = generate_file_name(metadata, "Cleaned") + ".txt"
         upload_to_azure("clean", clean_file_name, cleaned_text)
         st.write(f"Uploaded cleaned text to `clean/` folder: {clean_file_name}")
@@ -227,11 +215,11 @@ def upload_files_page():
 
         # Stage 4: Chunk and Embed into Weaviate
         with st.spinner("Chunking and embedding text into Weaviate..."):
-            tokenize_and_embed_text(clean_file_name, metadata)  # Call the combined chunking and embedding function
+            tokenize_and_embed_text(clean_file_name, metadata)
         st.success("Document processed and embedded successfully!")
         progress_bar.progress(100)
 
-    # Navigation buttons (centered)
+    # Navigation buttons
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("Return Home"):
@@ -240,18 +228,15 @@ def upload_files_page():
         if st.button("View Documents"):
             st.session_state.page = "view"
 
-# Define the view_documents_page function
+# View Documents Page
 def view_documents_page():
     st.title("Uploaded Documents")
-
-    # Fetch files from the Azure Blob Storage
     try:
-        # List blobs in the 'raw', 'dirty', and 'clean' folders
         raw_blobs = list_blobs_in_folder("raw")
         dirty_blobs = list_blobs_in_folder("dirty")
         clean_blobs = list_blobs_in_folder("clean")
 
-        # Display documents from 'raw' folder
+        # Display documents by category
         if raw_blobs:
             st.subheader("Raw Documents")
             for blob in raw_blobs:
@@ -260,7 +245,6 @@ def view_documents_page():
                     file_content = download_from_azure("raw", blob)
                     st.download_button("Download", data=file_content, file_name=blob)
 
-        # Display documents from 'dirty' folder
         if dirty_blobs:
             st.subheader("Dirty Documents")
             for blob in dirty_blobs:
@@ -269,7 +253,6 @@ def view_documents_page():
                     file_content = download_from_azure("dirty", blob)
                     st.download_button("Download", data=file_content, file_name=blob)
 
-        # Display documents from 'clean' folder
         if clean_blobs:
             st.subheader("Clean Documents")
             for blob in clean_blobs:
@@ -278,14 +261,12 @@ def view_documents_page():
                     file_content = download_from_azure("clean", blob)
                     st.download_button("Download", data=file_content, file_name=blob)
 
-        # If no files are found in any folder
         if not raw_blobs and not dirty_blobs and not clean_blobs:
             st.write("No documents found in the Azure Blob Storage.")
-
     except Exception as e:
-            st.error(f"Error fetching documents from Azure Blob Storage: {e}")
-                                                      
-    # Navigation buttons (centered)
+        st.error(f"Error fetching documents from Azure Blob Storage: {e}")
+
+    # Navigation buttons
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("Return Home"):
@@ -294,8 +275,7 @@ def view_documents_page():
         if st.button("Upload Files"):
             st.session_state.page = "upload"
 
-
-# Main page selection
+# Main page selection logic
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
