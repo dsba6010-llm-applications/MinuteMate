@@ -2,6 +2,7 @@ from st_weaviate_connection import WeaviateConnection
 import streamlit as st
 import time
 import os
+import requests
 
 from dotenv import load_dotenv
 
@@ -142,20 +143,38 @@ elif button_cols_2[1].button(example_prompts[4], help=example_prompts_help[4]):
 elif button_cols_2[2].button(example_prompts[5], help=example_prompts_help[5]):
     button_pressed = example_prompts[5]
 
+
+
 if prompt := (st.chat_input("Type your prompt") or button_pressed):
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    response = f"Searching for: {prompt}. Please wait..."
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        for chunk in response.split():
-            full_response += chunk + " "
-            time.sleep(0.05) 
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response) 
-
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+    try:
+        # Make API call to backend
+        response = requests.post(
+            "http://localhost:8000/process-prompt",  # Adjust URL as needed
+            json={"user_prompt_text": prompt}
+        )
+        
+        # Check if request was successful
+        if response.status_code == 200:
+            # Extract the generated response
+            generated_response = response.json().get('generated_response', 'No response generated')
+            respo = response.json()
+            
+            # Display the response
+            with st.chat_message("assistant"):
+                st.markdown(respo)
+            
+            # Add to message history
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": generated_response
+            })
+        else:
+            st.error(f"API Error: {response.text}")
+    
+    except requests.RequestException as e:
+        st.error(f"Connection error: {e}")
 
