@@ -7,3 +7,12 @@ pydantic
 
 # Necessary for web stuff
 uvicorn
+
+# vector database 
+weaviate-client==4.7.1
+
+# environmental variables such as API keys and endpoint URLs
+python-dotenv==1.0.0
+
+# for running queries
+openai==1.54.3
