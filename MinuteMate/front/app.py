@@ -161,11 +161,10 @@ if prompt := (st.chat_input("Type your prompt") or button_pressed):
         if response.status_code == 200:
             # Extract the generated response
             generated_response = response.json().get('generated_response', 'No response generated')
-            respo = response.json()
             
             # Display the response
             with st.chat_message("assistant"):
-                st.markdown(respo)
+                st.markdown(generated_response)
             
             # Add to message history
             st.session_state.messages.append({
