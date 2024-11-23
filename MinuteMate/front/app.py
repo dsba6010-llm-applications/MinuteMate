@@ -1,4 +1,4 @@
-from st_weaviate_connection import WeaviateConnection
+# from st_weaviate_connection import WeaviateConnection
 import streamlit as st
 import time
 import os
@@ -20,22 +20,22 @@ from dotenv import load_dotenv
 # )
 
 
-load_dotenv()
+# load_dotenv()
 
-ENV_VARS = ["WEAVIATE_URL", "WEAVIATE_API_KEY", "OPENAI_KEY"]
+# ENV_VARS = ["WEAVIATE_URL", "WEAVIATE_API_KEY", "OPENAI_KEY"]
 NUM_IMAGES_PER_ROW = 3
 
-def get_env_vars(env_vars: list) -> dict:
-    """Retrieve environment variables."""
-    env_vars_dict = {}
-    for var in ENV_VARS:
-        value = os.environ.get(var, "")
-        if value == "":
-            st.error(f"{var} not set", icon="🚨")
-            st.stop()  
-        env_vars_dict[var] = value
+# def get_env_vars(env_vars: list) -> dict:
+#     """Retrieve environment variables."""
+#     env_vars_dict = {}
+#     for var in ENV_VARS:
+#         value = os.environ.get(var, "")
+#         if value == "":
+#             st.error(f"{var} not set", icon="🚨")
+#             st.stop()  
+#         env_vars_dict[var] = value
 
-    return env_vars_dict
+#     return env_vars_dict
 
 
 def display_chat_messages() -> None:
@@ -50,20 +50,20 @@ def display_chat_messages() -> None:
                         if i + j < len(message["images"]):
                             cols[j].image(message["images"][i + j], width=200)
 
-env_vars = get_env_vars(ENV_VARS)
-url = env_vars["WEAVIATE_URL"]
-api_key = env_vars["WEAVIATE_API_KEY"]
-openai_key = env_vars["OPENAI_KEY"]
+# env_vars = get_env_vars(ENV_VARS)
+# url = env_vars["WEAVIATE_URL"]
+# api_key = env_vars["WEAVIATE_API_KEY"]
+# openai_key = env_vars["OPENAI_KEY"]
 
 st.title("📝 Minute Mate")
 
-conn = st.connection(
-    "weaviate",
-    type=WeaviateConnection,
-    url=url,
-    api_key=api_key,
-    additional_headers={"X-OpenAI-Api-Key": openai_key},
-)
+# conn = st.connection(
+#     "weaviate",
+#     type=WeaviateConnection,
+#     url=url,
+#     api_key=api_key,
+#     additional_headers={"X-OpenAI-Api-Key": openai_key},
+# )
 
 with st.sidebar:
     

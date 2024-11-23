@@ -1,18 +1,30 @@
+# SSL - mainly for NLTK at this point
+# ssl  #==1.16
+
+
+# NLP stuff
+rake_nltk  #==1.0.6
+nltk  #==3.9.1
+
+
+
+
 # Necessary for the API
-fastapi[standard]
+fastapi[standard]  #==0.115.5
 
 # Necessary for the API
 # Handles data validation, parsing, error handling, conversions, type hints
-pydantic
+pydantic  #==2.10.1
 
 # Necessary for web stuff
-uvicorn
+uvicorn[standard]  #==0.32.1
 
 # vector database 
-weaviate-client==4.7.1
+weaviate-client  #==4.7.1
 
 # environmental variables such as API keys and endpoint URLs
-python-dotenv==1.0.0
+python-dotenv  #==1.0.0
 
 # for running queries
-openai==1.54.3
+openai  #==1.54.3
+
