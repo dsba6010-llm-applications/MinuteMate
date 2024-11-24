@@ -44,6 +44,7 @@ The **Preprocessing Pipeline** is a staff-facing application designed to streaml
 #### For Agendas and Minutes 📄:
 1. 📥 **Upload**: Files are uploaded to Azure’s "Raw Data" folder.
 2. 📄 **PDF-to-Text Conversion**: Files are converted to text using a PDF conversion utility.
+   - If the PDF contains scanned images, `easyocr` is used as a fallback for Optical Character Recognition (OCR).
 3. 🛠️ **Cleaning**: The raw text is saved in a "Dirty Folder," tokenized, chunked, and sent to OpenAI for cleaning.
 4. 📊 **Vectorization**: The cleaned text is embedded using **text-embedding-ada-002**.
 5. 💾 **Storage**: Vectorized data is stored in Weaviate Cloud for further analysis and retrieval.
@@ -53,6 +54,20 @@ The **Preprocessing Pipeline** is a staff-facing application designed to streaml
   - **Raw Audio** 🎵
   - **Dirty Transcriptions** 📝
   - **Clean Text** ✅
+
+---
+
+## 🧪 Testing with Pytest
+
+The project includes a `pytest` file to validate key components of the pipeline. Here’s what you can test:
+1. **Dependencies Check**:
+   - Ensure all required dependencies are installed.
+2. **Environment Variables Check**:
+   - Verify that all environment variables (e.g., API keys, connection strings) are properly set up.
+3. **Azure Upload and Download**:
+   - Test uploading and downloading files to/from Azure Blob Storage folders (`raw`, `dirty`, `clean`).
+4. **PDF Conversion**:
+   - Test the `convert_pdf_to_text` function to extract text from a PDF, including fallback OCR with `easyocr` for scanned PDFs.
 
 ---
 

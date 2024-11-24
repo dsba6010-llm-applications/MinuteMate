@@ -19,6 +19,8 @@ PyMuPDF
 # azure portal
 azure.storage.blob
 
+# additional libraries
 transformers
-
 chardet
+pytest
+easyocr
