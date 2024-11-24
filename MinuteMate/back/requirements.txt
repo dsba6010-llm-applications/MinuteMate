@@ -1,22 +1,25 @@
-# NLP stuff
+# NLP stuff for keyword search
 rake_nltk==1.0.6
 nltk==3.9.1
 
-# Necessary for the API
+# API framework
 fastapi[standard]==0.115.5
 
+# Handles data validation, parsing, error handling, 
+# conversions, and type hints
 # Necessary for the API
-# Handles data validation, parsing, error handling, conversions, type hints
 pydantic==2.10.1
 
-# Necessary for web stuff
+# Web server used by FastAPI
 uvicorn[standard]==0.32.1
 
-# vector database 
+# Weaviate vector database Python API
 weaviate-client==4.7.1
 
-# environmental variables such as API keys and endpoint URLs
+# For loading environmental variables such as API
+# keys and endpoint URLs
 python-dotenv==1.0.0
 
-# for running queries
+# OpenAI Python API for interacting with generative
+# and embedding models
 openai==1.54.3
