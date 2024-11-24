@@ -232,37 +232,61 @@ def upload_files_page():
 def view_documents_page():
     st.title("Uploaded Documents")
     try:
+        # Fetch blobs from each folder
         raw_blobs = list_blobs_in_folder("raw")
         dirty_blobs = list_blobs_in_folder("dirty")
         clean_blobs = list_blobs_in_folder("clean")
 
-        # Display documents by category
-        if raw_blobs:
-            st.subheader("Raw Documents")
-            for blob in raw_blobs:
-                st.write(f"- {blob}")
-                if st.button(f"Download {blob}", key=f"download_raw_{blob}"):
-                    file_content = download_from_azure("raw", blob)
-                    st.download_button("Download", data=file_content, file_name=blob)
+        def group_blobs_by_date(blobs):
+            """Groups blobs by their date extracted from the file name."""
+            grouped = {}
+            for blob in blobs:
+                try:
+                    # Extract the file name without folder prefix (e.g., "raw/")
+                    file_name = blob.split("/")[-1]  # Get only the file name part
+                    
+                    # Extract the date from the file name (assuming format: YYYY_MM_DD)
+                    parts = file_name.split("_")  # Split into ['2023', '12', '12', 'BOC', 'Agenda', ...]
+                    date_str = "_".join(parts[:3])  # Join the first three parts: '2023_12_12'
+                    
+                    # Convert the date string to a readable format
+                    readable_date = datetime.strptime(date_str, "%Y_%m_%d").strftime("%B %d, %Y")
+                    
+                    # Group by the readable date
+                    if readable_date not in grouped:
+                        grouped[readable_date] = []
+                    grouped[readable_date].append(blob)
+                except (ValueError, IndexError):
+                    # Handle files with unexpected formats
+                    if "Unknown Date" not in grouped:
+                        grouped["Unknown Date"] = []
+                    grouped["Unknown Date"].append(blob)
+            return grouped
 
-        if dirty_blobs:
-            st.subheader("Dirty Documents")
-            for blob in dirty_blobs:
-                st.write(f"- {blob}")
-                if st.button(f"Download {blob}", key=f"download_dirty_{blob}"):
-                    file_content = download_from_azure("dirty", blob)
-                    st.download_button("Download", data=file_content, file_name=blob)
+        # Group blobs by date
+        raw_grouped = group_blobs_by_date(raw_blobs)
+        dirty_grouped = group_blobs_by_date(dirty_blobs)
+        clean_grouped = group_blobs_by_date(clean_blobs)
 
-        if clean_blobs:
-            st.subheader("Clean Documents")
-            for blob in clean_blobs:
-                st.write(f"- {blob}")
-                if st.button(f"Download {blob}", key=f"download_clean_{blob}"):
-                    file_content = download_from_azure("clean", blob)
-                    st.download_button("Download", data=file_content, file_name=blob)
+        # Function to display blobs within a group
+        def display_grouped_blobs(grouped_blobs, category):
+            if grouped_blobs:
+                st.subheader(f"{category.capitalize()} Documents")
+                for date, blobs in grouped_blobs.items():
+                    with st.expander(f"Date: {date}", expanded=False):
+                        for blob in blobs:
+                            st.write(f"- {blob}")
+                            if st.button(f"Download {blob}", key=f"download_{category}_{blob}"):
+                                file_content = download_from_azure(category, blob)
+                                st.download_button("Download", data=file_content, file_name=blob)
+            else:
+                st.info(f"No documents found in the {category} category.")
 
-        if not raw_blobs and not dirty_blobs and not clean_blobs:
-            st.write("No documents found in the Azure Blob Storage.")
+        # Display grouped blobs
+        display_grouped_blobs(raw_grouped, "raw")
+        display_grouped_blobs(dirty_grouped, "dirty")
+        display_grouped_blobs(clean_grouped, "clean")
+
     except Exception as e:
         st.error(f"Error fetching documents from Azure Blob Storage: {e}")
 
