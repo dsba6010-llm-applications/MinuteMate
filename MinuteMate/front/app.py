@@ -1,10 +1,6 @@
-# from st_weaviate_connection import WeaviateConnection
 import streamlit as st
-import time
-import os
 import requests
 
-from dotenv import load_dotenv
 
 # st.set_page_config(layout="wide")
 
@@ -20,23 +16,7 @@ from dotenv import load_dotenv
 # )
 
 
-# load_dotenv()
-
-# ENV_VARS = ["WEAVIATE_URL", "WEAVIATE_API_KEY", "OPENAI_KEY"]
 NUM_IMAGES_PER_ROW = 3
-
-# def get_env_vars(env_vars: list) -> dict:
-#     """Retrieve environment variables."""
-#     env_vars_dict = {}
-#     for var in ENV_VARS:
-#         value = os.environ.get(var, "")
-#         if value == "":
-#             st.error(f"{var} not set", icon="🚨")
-#             st.stop()  
-#         env_vars_dict[var] = value
-
-#     return env_vars_dict
-
 
 def display_chat_messages() -> None:
     """Display chat message history."""
@@ -50,24 +30,12 @@ def display_chat_messages() -> None:
                         if i + j < len(message["images"]):
                             cols[j].image(message["images"][i + j], width=200)
 
-# env_vars = get_env_vars(ENV_VARS)
-# url = env_vars["WEAVIATE_URL"]
-# api_key = env_vars["WEAVIATE_API_KEY"]
-# openai_key = env_vars["OPENAI_KEY"]
-
 st.title("📝 Minute Mate")
-
-# conn = st.connection(
-#     "weaviate",
-#     type=WeaviateConnection,
-#     url=url,
-#     api_key=api_key,
-#     additional_headers={"X-OpenAI-Api-Key": openai_key},
-# )
 
 with st.sidebar:
     
-    st.sidebar.image("./../../assets/Fun_Logo.jpg", width=150)
+    # TODO add image to app assets to deploy
+    # st.sidebar.image("./../../assets/Fun_Logo.jpg", width=150)
     st.subheader("Speeding up Municipal Communication")
 
     st.header("Settings")
@@ -144,7 +112,6 @@ elif button_cols_2[2].button(example_prompts[5], help=example_prompts_help[5]):
     button_pressed = example_prompts[5]
 
 
-
 if prompt := (st.chat_input("Type your prompt") or button_pressed):
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -153,7 +120,7 @@ if prompt := (st.chat_input("Type your prompt") or button_pressed):
     try:
         # Make API call to backend
         response = requests.post(
-            "http://localhost:8000/process-prompt",  # Adjust URL as needed
+            "http://host.docker.internal:8001/process-prompt",  # Adjust URL as needed
             json={"user_prompt_text": prompt}
         )
         

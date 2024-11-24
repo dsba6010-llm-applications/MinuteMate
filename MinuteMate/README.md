@@ -17,6 +17,33 @@
 
 ##### Setup - Docker
 
+In MinuteMate/back:
 
+Set up secrets in a .env file according to .env.example
+
+```bash
+docker compose --env-file .env up -d --build
+```
+
+In MinuteMate/front:
+
+```bash
+docker compose up -d --build
+```
+
+
+##### Setup - Repo
+
+**Front-End
+```
+cd /MinuteMate/front/
+streamlit run app.py
+```
+
+**Back-End
+```
+cd /MinuteMate/back/
+uvicorn main02:app --reload
+```
 
 
