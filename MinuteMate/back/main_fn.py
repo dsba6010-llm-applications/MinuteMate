@@ -109,7 +109,7 @@ def process_prompt(prompt_request: PromptRequest) -> PromptResponse:
     # TODO - test
     elif(SEARCH_TYPE == 'vector'):
         
-            
+
         # Set API Key.  Not necessary if you have an 
         # OPENAI_API_KEY variable in your environment
         openai.api_key = OPENAI_API_KEY 
@@ -179,7 +179,8 @@ def process_prompt(prompt_request: PromptRequest) -> PromptResponse:
     # to be passed along to frontend
     prompt_response = PromptResponse()
     prompt_response.generated_response = generated_response_text
-    return prompt_request
+    return prompt_response
+
 
 
     

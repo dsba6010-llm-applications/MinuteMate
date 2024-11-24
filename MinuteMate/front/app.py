@@ -18,8 +18,6 @@ import requests
 
 NUM_IMAGES_PER_ROW = 3
 
-
-
 def display_chat_messages() -> None:
     """Display chat message history."""
     for message in st.session_state.messages:
@@ -31,7 +29,6 @@ def display_chat_messages() -> None:
                     for j in range(NUM_IMAGES_PER_ROW):
                         if i + j < len(message["images"]):
                             cols[j].image(message["images"][i + j], width=200)
-
 
 st.title("📝 Minute Mate")
 

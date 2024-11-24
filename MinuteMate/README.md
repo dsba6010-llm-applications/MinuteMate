@@ -17,8 +17,6 @@
 
 ##### Setup - Docker
 
-
-
 In MinuteMate/back:
 
 Set up secrets in a .env file according to .env.example
