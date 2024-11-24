@@ -1,6 +1,7 @@
-FROM python:3.11-slim
-WORKDIR /App
-COPY . /App
+FROM python:3.11
+WORKDIR /app
+COPY . /app
+RUN pip install --upgrade pip
 RUN python -m pip install -r requirements.txt
-EXPOSE 8000
-CMD [" ", "start","--port","8002","--host","0.0.0.0"]
+EXPOSE 8501
+CMD ["streamlit", "run","app.py"]

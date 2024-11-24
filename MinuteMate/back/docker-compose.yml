@@ -1,0 +1,11 @@
+services:
+  chat_backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - 8001:8001
+    environment:
+      - WEAVIATE_ENDPOINT_URL=$WEAVIATE_ENDPOINT_URL
+      - WEAVIATE_API_KEY=$WEAVIATE_API_KEY
+      - OPENAI_API_KEY=$OPENAI_API_KEY
