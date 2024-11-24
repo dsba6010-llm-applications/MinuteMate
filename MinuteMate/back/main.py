@@ -105,7 +105,7 @@ class PromptProcessor:
         
         # Initialize clients
         self.weaviate_client = WeaviateConfig.get_weaviate_client(
-            self.WEAVIATE_URL, 
+            self.WEAVIATE_ENDPOINT_URL, 
             self.WEAVIATE_API_KEY
         )
         self.openai_client = OpenAI(api_key=self.OPENAI_API_KEY)
@@ -114,7 +114,7 @@ class PromptProcessor:
         """Load and validate environment variables"""
         required_vars = [
             'OPENAI_API_KEY', 
-            'WEAVIATE_URL', 
+            'WEAVIATE_ENDPOINT_URL', 
             'WEAVIATE_API_KEY'
         ]
         

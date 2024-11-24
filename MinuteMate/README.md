@@ -43,7 +43,7 @@ streamlit run app.py
 **Back-End
 ```
 cd /MinuteMate/back/
-uvicorn main02:app --reload
+uvicorn main:app --reload
 ```
 
 
