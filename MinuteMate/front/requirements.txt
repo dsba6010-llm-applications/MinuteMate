@@ -1,8 +1,4 @@
-# Environmental variables
-python-dotenv==1.0.0
 
-# Embedding and generation
-openai==1.54.3
+streamlit
 
-# Vector database
-weaviate-client==4.7.1
+pandas

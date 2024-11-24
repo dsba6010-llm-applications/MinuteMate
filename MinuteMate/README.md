@@ -15,6 +15,25 @@
 - **Response Generation** - Generates a response, typically by sending a request to a generative model with the original user prompt and a system prompt including selected resources acquired from the vector database. 
 - **Trust & Safety** - Two separate stages, each using an external generative model.  The first stage examines only the incoming prompt.  If an inappropriate prompt is detected at this stage, all ordinary steps are skipped and a response is sent declining the prompt.  The second examines generated responses and vetoes those with inappropriate content.
 
+##### Setup - Docker
+
+
+
+In MinuteMate/back:
+
+Set up secrets in a .env file according to .env.example
+
+```bash
+docker compose --env-file .env up -d --build
+```
+
+In MinuteMate/front:
+
+```bash
+docker compose up -d --build
+```
+
+
 ##### Setup - Repo
 
 **Front-End

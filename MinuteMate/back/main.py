@@ -1,199 +1,242 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
 import os
+import logging
+from typing import Optional, List
 
-from rake_nltk import Rake
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 import weaviate
 from weaviate.classes.init import Auth
-from weaviate.classes.init import AdditionalConfig
-from weaviate.classes.init import Timeout
-from weaviate.classes.query import Rerank
-from weaviate.classes.query import MetadataQuery
+from weaviate.classes.query import Rerank, MetadataQuery
 
 import openai
 from openai import OpenAI
 
 
+from rake_nltk import Rake
+from dotenv import load_dotenv
+
+import nltk
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+
+try:
+    nltk.download('punkt')
+    nltk.download('punkt_tab')
+    nltk.download('stopwords')
+except Exception as e:
+    print(f"Error downloading NLTK resources: {e}")
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+load_dotenv()
+
+
 # Initialize the FastAPI app
 app = FastAPI(
-    title="MinuteMate Propmpt & Response API",
-    description="A simple API that takes a text prompt uses ",
-    version="1.0.0" 
-
+    title="MinuteMate Prompt & Response API",
+    description="An AI-powered API for processing meeting-related prompts",
+    version="1.0.0"
 )
 
-# Define the request schema
-class PromptRequest(BaseModel):
-    user_prompt_text: str
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
-# Define the response schema
+# Define request and response models
+class PromptRequest(BaseModel):
+    user_prompt_text: str = Field(..., min_length=1, max_length=1000)
+
+class ContextSegment(BaseModel):
+    chunk_id: int
+    content: str
+    score: Optional[float] = None
+
 class PromptResponse(BaseModel):
     generated_response: str
-    error_code : int
+    context_segments: List[ContextSegment] = []
+    keywords: List[str] = []
+    error_code: int = 0
 
-# Takes a prompt from the front end, processes the prompt
-# using NLP tools, embedding services, and generative services
-# and finally returns the prompt response
-def process_prompt(prompt_request: PromptRequest) -> PromptResponse:
+class WeaviateConfig:
+    """Configuration for Weaviate connection and querying"""
+    SEARCH_TYPES = {
+        'keyword': 'bm25',
+        'vector': 'near_vector',
+        'hybrid': 'hybrid'
+    }
 
-    ### 0 - ENVIRONMENT AND CONFIGURATION ###
+    @classmethod
+    def get_weaviate_client(cls, url: str, api_key: str):
+        """Establish Weaviate connection"""
+        try:
+            return weaviate.connect_to_weaviate_cloud(
+                cluster_url=url,
+                auth_credentials=Auth.api_key(api_key),
+                additional_config=weaviate.classes.init.AdditionalConfig(
+                    timeout=weaviate.classes.init.Timeout(init=10, query=30)
+                )
+            )
+        except Exception as e:
+            logger.error(f"Weaviate connection error: {e}")
+            raise
 
-    # Update environment variables
-    # not sure if this works
-    # TODO test and/or look for alternatives
-    import os  
-
-    # Set API keys, endpoint URLs, model versions, and configurations
-    # Embedding and Generative Models
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    # OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL')
-    OPENAI_EMBEDDING_URL = os.getenv('OPENAI_EMBEDDING_URL')
-    OPENAI_GENERATION_URL = os.getenv('OPENAI_GENERATION_URL')
-    EMBEDDING_MODEL = 'text-embedding-3-small'
-    ENCODING_FORMAT = 'float'
-    RESPONDING_GENERATIVE_MODEL = 'gpt-4o'
-    # TRUSTSAFETY_GENERATIVE_MODEL = llama on modal, probably, but can't be too
-                                      
-    # API key, endpoint URL, and target collection(s)
-    # for Weaviate vector database
-    WEAVIATE_URL = os.environ['WEAVIATE_URL']
-    WEAVIATE_API_KEY = os.environ['WEAVIATE_API_KEY']
-    WEAVIATE_TARGET_COLLECTION = 'MeetingDocument'
-    # WEAVIATE_TARGET_COLLECTION = "VERBA_Embedding_text_embedding_3_small"
-
-
-
-    ### 1- INITIAL TRUST AND SAFETY CHECK ###
-    # TODO add initial trust & safety check here
-    # If trust and safety check fails, return the error immediately
-
-
-
-    ### 2- INFORMATION RETRIEVAL ###
-
-    # Set RAG search type
-    SEARCH_TYPE = 'keyword'
-    # SEARCH_TYPE = 'vector'
-    # SEARCH_TYPE = 'hybrid'
-    
-    # Establish connection with Weaviate server
-    # https://weaviate.io/developers/weaviate
-    weaviate_client = weaviate.connect_to_weaviate_cloud(
-        cluster_url=WEAVIATE_URL,
-        auth_credentials=Auth.api_key(WEAVIATE_API_KEY),
-    ) 
-    # Look up the appropriate Weviate database collection
-    db_collection = weaviate_client.collections.get(WEAVIATE_TARGET_COLLECTION)
-    db_response = None
-
-    # Extract keywords and query database
-    #  TODO - finish and test
-    if(SEARCH_TYPE == 'keyword'):
+class PromptProcessor:
+    """Main class for processing user prompts"""
+    def __init__(self):
+        # Load environment variables
+        self.load_env_vars()
         
-        rake = Rake()
-        rake.extract_keywords_from_text(prompt_request.user_prompt_text)
-        keywords = rake.get_ranked_phrases()[:3]
-        db_response = db_collection.query.bm25(
-            query=",".join(keywords),
-            limit=5,
-            # rerank=Rerank(
-            #     prop="content",
-            #     query="meeting"
-            # ),
-        # return_metadata=MetadataQuery(score=True)
+        # Initialize clients
+        self.weaviate_client = WeaviateConfig.get_weaviate_client(
+            self.WEAVIATE_URL, 
+            self.WEAVIATE_API_KEY
         )
+        self.openai_client = OpenAI(api_key=self.OPENAI_API_KEY)
 
-    # Vectorize the prompt and query the database
-    # TODO - test
-    elif(SEARCH_TYPE == 'vector'):
-        
-            
-        # Set API Key.  Not necessary if you have an 
-        # OPENAI_API_KEY variable in your environment
-        openai.api_key = OPENAI_API_KEY 
-        embedding_client = OpenAI()
-
-        # Vector-embed the prompt
-        embedding_response = embedding_client.embeddings.create(
-            model = EMBEDDING_MODEL,
-            input = prompt_request.user_prompt_text,
-            encoding_format = ENCODING_FORMAT
-        )
-
-        # Extract the vector embeddings list[float] from the embedding response
-        query_vector = embedding_response.data[0].embedding 
-        
-        # Send vector query to database and get response
-        db_response = db_collection.query.near_vector(
-            near_vector=query_vector,
-            limit=10,
-            return_metadata=MetadataQuery(distance=True)
-        )
-
-    #TODO support this   
-    #elif(SEARCH_TYPE == 'hybrid'):
-    
-
-    else:
-        #No RAG search
-        db_response = None
-
-    # Extract items from database response 
-    # and aggregate into a single string 
-    db_response_text = ""
-    for item in db_response.objects:
-        segment = '\n<ContextSegment' + str(int(item.properties.get('chunk_id'))) + '>\n'
-        db_response_text += segment
-        db_response_text += item.properties.get('content')
-
-
-    ### 3 - RESPONSE GENERATION ### 
-
-    # Generate response to user with OpenAI generative model
-    # https://platform.openai.com/docs/api-reference/chat/create
-    openai.api_key = OPENAI_API_KEY 
-    generation_client = OpenAI()
-    generated_response_text = generation_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-            "role": "system", 
-            "content": f"You are a helpful assistant who uses this context if appropriate: {db_response_text}"
-            },
-            {
-            "role": "user", 
-            "content": prompt_request.user_prompt_text 
-            }
+    def load_env_vars(self):
+        """Load and validate environment variables"""
+        required_vars = [
+            'OPENAI_API_KEY', 
+            'WEAVIATE_URL', 
+            'WEAVIATE_API_KEY'
         ]
-    )
+        
+        for var in required_vars:
+            value = os.getenv(var)
+            print(f"Loading {var}: {value}")
+            if not value:
+                raise ValueError(f"Missing environment variable: {var}")
+            setattr(self, var, value)
 
-    ### 4 - FINAL TRUST AND SAFETY CHECK ###
-    # TODO add final trust & safety check here
-    # If trust and safety check fails, return an error
-    
+    def extract_keywords(self, text: str) -> List[str]:
+        """Extract keywords using RAKE"""
+        try:
+            
+            rake = Rake()
+            rake.extract_keywords_from_text(text)
+            return rake.get_ranked_phrases()[:3]
+        except Exception as e:
+            logger.error(f"Keyword extraction error: {e}")
+            return []
 
-    ### 5 - BUILD & RETURN RESPONSE OBJECT ###
-    # Return chat response to API layer
-    # to be passed along to frontend
-    prompt_response = PromptResponse()
-    prompt_response.generated_response = generated_response_text
-    return prompt_request
+    def search_weaviate(self, query: str, search_type: str = 'keyword') -> List[ContextSegment]:
+        """Perform search in Weaviate database"""
+        try:
+            collection = self.weaviate_client.collections.get('MeetingDocument')
+            
+            if search_type == 'keyword':
+                keywords = self.extract_keywords(query)
+                results = collection.query.bm25(
+                    query=",".join(keywords),
+                    limit=5
+                )
+                print(keywords)
+            elif search_type == 'vector':
+                embedding = self.openai_client.embeddings.create(
+                    model='text-embedding-3-small',
+                    input=query
+                ).data[0].embedding
+                
+                results = collection.query.near_vector(
+                    near_vector=embedding,
+                    limit=5
+                )
+            else:
+                raise ValueError(f"Unsupported search type: {search_type}")
 
+            context_segments =  [
+                ContextSegment(
+                    chunk_id=int(item.properties.get('chunk_id', 0)),
+                    content=item.properties.get('content', ''),
+                    score=getattr(item.metadata, 'distance', None)
+                ) for item in results.objects
+            ]
+            return context_segments, keywords
+        except Exception as e:
+            logger.error(f"Weaviate search error: {e}")
+            return []
 
-    
-    
+    def generate_response(self, prompt: str, context_segments: List[ContextSegment]) -> str:
+        """Generate response using OpenAI"""
+        context_text = "\n".join([
+            f"<ContextSegment{seg.chunk_id}>\n{seg.content}" 
+            for seg in context_segments
+        ])
 
-# API endpoint
+        try:
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": f"Use this context if relevant: {context_text}"
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ]
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"OpenAI generation error: {e}")
+            return "I'm sorry, but I couldn't generate a response."
+
+    def process_prompt(self, prompt_request: PromptRequest) -> PromptResponse:
+        """Main method to process user prompt"""
+        try:
+            # Search for relevant context
+            context_segments, keywords = self.search_weaviate(prompt_request.user_prompt_text)
+            
+            # Generate response
+            generated_response = self.generate_response(
+                prompt_request.user_prompt_text, 
+                context_segments
+            )
+
+            return PromptResponse(
+                generated_response=generated_response,
+                context_segments=context_segments,
+                keywords = keywords,
+                error_code=0
+            )
+
+        except Exception as e:
+            logger.error(f"Prompt processing error: {e}")
+            return PromptResponse(
+                generated_response="An error occurred while processing your request.",
+                error_code=500
+            )
+
+# Initialize processor
+processor = PromptProcessor()
+
+# API Endpoint
 @app.post("/process-prompt", response_model=PromptResponse)
 async def process_prompt_endpoint(prompt_request: PromptRequest):
-    """
-    Process the prompt and return the response
-    """
-    try:
-        prompt_response = process_prompt(prompt_request)
-        return PromptResponse(result=prompt_response)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+    """Process user prompt and return response"""
+    return processor.process_prompt(prompt_request)
+
+
+# Cleanup on shutdown
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close Weaviate connection on app shutdown"""
+    processor.weaviate_client.close()
