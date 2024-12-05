@@ -13,7 +13,6 @@ from weaviate.classes.query import Rerank, MetadataQuery
 import openai
 from openai import OpenAI
 
-
 from rake_nltk import Rake
 from dotenv import load_dotenv
 
@@ -195,6 +194,85 @@ class PromptProcessor:
                 ]
             )
             return response.choices[0].message.content
+        
+        except Exception as e:
+            logger.error(f"OpenAI generation error: {e}")
+            return "I'm sorry, but I couldn't generate a response."
+
+    def check_prompt(self, prompt: str) -> str:
+        """Check prompt appropriateness using OpenAI"""
+
+        try:
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": """A local government hosts a chat system that uses retrieval-augmented generation 
+                        to improve public access to the contents of its public meetings.  The system has access to 
+                        meeting agendas, minutes, and transcriptions.  
+                        
+                        Your role is to determine whether prompts provided by users of this system are appropriate. 
+                        It's very important that users be able to access reasonable to reasonable requests, but toxic, 
+                        abusive, or illegal responses should be identified.  
+                        
+                        Requests seeking information that is accurate and politically relevant are appropriate, 
+                        even if the information sought is embarassing to the government or individuals or includes
+                        references to abusive, illegal, or controversial actions or ideas.  
+                        
+                        The first word of your response is always 'appropriate', 'inappropriate', or 'ambiguous'. 
+                        The rest of your response provides the top three to five concise factors that explain this decision."""
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ]
+            )
+            if response.choices[0].message.content.split(maxsplit=1)[0] in {'appropriate', 'inappropriate', 'ambiguous'}:
+                return response.choices[0].message.content
+            else:
+                return 'error generating prompt check'
+        
+        except Exception as e:
+            logger.error(f"OpenAI generation error: {e}")
+            return "I'm sorry, but I couldn't generate a response."
+
+    def check_response(self, prompt: str) -> str:
+        """Check response appropriateness using OpenAI"""
+
+        try:
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": """A local government hosts a chat system that uses retrieval-augmented generation 
+                        to improve public access to the contents of its public meetings.  The system has access to 
+                        meeting agendas, minutes, and transcriptions.  
+                        
+                        Your role is to determine whether the chat system's responses to prompts are appropriate. 
+                        It's very important that the chat system be able to deliver reasonable responses, 
+                        but clearly toxic, abusive, or illegal responses should be identified.
+                        
+                        Information that is accurate and politically relevant is appropriate, even if it is embarassing 
+                        to the government or individuals or includes references to abusive, illegal, or controversial 
+                        actions or ideas.
+                        
+                        The first word of your response is always 'appropriate', 'inappropriate', or 'ambiguous'.  
+                        The rest of your response provides the top three to five concise factors that explain this decision."""
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ]
+            )
+            if response.choices[0].message.content.split(maxsplit=1)[0] in {'appropriate', 'inappropriate', 'ambiguous'}:
+                return response.choices[0].message.content
+            else:
+                return 'error generating response check'
+        
         except Exception as e:
             logger.error(f"OpenAI generation error: {e}")
             return "I'm sorry, but I couldn't generate a response."
@@ -202,6 +280,12 @@ class PromptProcessor:
     def process_prompt(self, prompt_request: PromptRequest) -> PromptResponse:
         """Main method to process user prompt"""
         try:
+            
+            # Check the user prompt for inappropriate content
+            prompt_check = self.check_prompt(prompt_request.user_prompt_text)
+            if prompt_check.split(maxsplit=1)[0] == 'inappropriate':
+                return PromptResponse(generated_response = 'inappropriate prompt detected')
+
             # Search for relevant context
             context_segments, keywords = self.search_weaviate(prompt_request.user_prompt_text)
             
@@ -210,6 +294,11 @@ class PromptProcessor:
                 prompt_request.user_prompt_text, 
                 context_segments
             )
+
+            # Check the generated response for inappropriate content
+            response_check = self.check_response(prompt_request.user_prompt_text)
+            if response_check.split(maxsplit=1)[0] == 'inappropriate':
+                return PromptResponse(generated_response = 'inappropriate response detected')
 
             return PromptResponse(
                 generated_response=generated_response,
