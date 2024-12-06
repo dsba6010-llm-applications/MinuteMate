@@ -23,6 +23,56 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 # Initialize tiktoken for OpenAI's embedding model
 tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
 
+
+def fetch_matching_chunks(meeting_date, meeting_type, file_type, source_document):
+    """
+    Fetch matching chunks from Weaviate based on metadata.
+
+    Args:
+        meeting_date (str): Date of the meeting.
+        meeting_type (str): Type of the meeting (e.g., "Board of Commissioners").
+        file_type (str): File type (e.g., "Minutes").
+        source_document (str): Name of the source document.
+
+    Returns:
+        list: A list of matching documents.
+    """
+    query = f"""
+    {{
+        Get {{
+            MeetingDocument(where: {{
+                operator: And,
+                operands: [
+                    {{ path: ["meeting_date"], operator: Equal, valueString: "{meeting_date}" }},
+                    {{ path: ["meeting_type"], operator: Equal, valueString: "{meeting_type}" }},
+                    {{ path: ["file_type"], operator: Equal, valueString: "{file_type}" }},
+                    {{ path: ["source_document"], operator: Equal, valueString: "{source_document}" }}
+                ]
+            }}) {{
+                _additional {{
+                    id
+                }}
+            }}
+        }}
+    }}
+    """
+    response = client.query.raw(query)
+    return response.get("data", {}).get("Get", {}).get("MeetingDocument", [])
+
+
+def delete_matching_chunks(documents):
+    """
+    Delete matching chunks from Weaviate.
+
+    Args:
+        documents (list): List of documents with IDs to delete.
+    """
+    for doc in documents:
+        doc_id = doc["_additional"]["id"]
+        client.data_object.delete(doc_id)
+        print(f"Deleted chunk ID: {doc_id}")
+
+
 def tokenize_and_embed_text(clean_file_name, metadata, max_chunk_size=250):
     """
     Tokenizes, chunks, and embeds cleaned text into Weaviate.
@@ -33,68 +83,46 @@ def tokenize_and_embed_text(clean_file_name, metadata, max_chunk_size=250):
         max_chunk_size (int): Maximum token size for each chunk.
     """
     try:
-        # Step 1: Download cleaned text from Azure
+        # Download cleaned text from Azure
         clean_text = download_from_azure("clean", clean_file_name)
-        print(f"Downloaded cleaned text from Azure for file: {clean_file_name}")
-
-        # Step 2: Tokenize the text using tiktoken
         tokens = tokenizer.encode(clean_text)
-
-        # Step 3: Chunk tokens into groups of max_chunk_size (default: 250 tokens per chunk)
         chunks = [
             tokenizer.decode(tokens[i:i + max_chunk_size])
             for i in range(0, len(tokens), max_chunk_size)
         ]
-        print(f"Tokenized and split text into {len(chunks)} chunks of {max_chunk_size} tokens each.")
 
-        # Extract metadata for embedding
+        # Metadata fields
         meeting_date = str(metadata["meeting_date"])
         meeting_type = metadata["meeting_type"]
         file_type = metadata["file_type"]
+        source_document = clean_file_name
 
-        # Step 4: Check and delete existing embeddings in Weaviate (to prevent duplication)
-        query = f"""
-        {{
-            Get {{
-                MeetingDocument(where: {{
-                    path: ["meeting_date", "meeting_type", "file_type"],
-                    operator: And,
-                    valueString: "{meeting_date}"
-                }}) {{
-                    id
-                }}
-            }}
-        }}
-        """
-        response = client.query.raw(query)
-        existing_documents = response.get("data", {}).get("Get", {}).get("MeetingDocument", [])
+        # Check for existing embeddings
+        matching_chunks = fetch_matching_chunks(meeting_date, meeting_type, file_type, source_document)
+        if matching_chunks:
+            print(f"Found {len(matching_chunks)} existing chunks. Deleting...")
+            delete_matching_chunks(matching_chunks)
+        else:
+            print("No existing chunks found.")
 
-        for doc in existing_documents:
-            client.data_object.delete(doc["id"])
-        print(f"Deleted {len(existing_documents)} existing embeddings for this file.")
-
-        # Step 5: Embed each chunk using OpenAI and store in Weaviate
+        # Embed and upload each chunk
         for i, chunk in enumerate(chunks):
-            # Generate embedding using OpenAI
-            response = openai_client.embeddings.create(
-                input=chunk,
-                model="text-embedding-ada-002"
-            )
-            embedding = response.data[0].embedding  # Correctly access embedding from the response object
+            response = openai_client.embeddings.create(input=chunk, model="text-embedding-ada-002")
+            embedding = response.data[0].embedding
 
-            # Upload chunk to Weaviate
             client.data_object.create(
                 data_object={
                     "content": chunk,
                     "meeting_date": meeting_date,
                     "meeting_type": meeting_type,
                     "file_type": file_type,
-                    "chunk_index": i  # Include chunk index for ordering
+                    "chunk_index": i,
+                    "source_document": source_document
                 },
                 vector=embedding,
                 class_name="MeetingDocument"
             )
-            print(f"Uploaded chunk {i+1}/{len(chunks)} to Weaviate.")
+            print(f"Uploaded chunk {i + 1}/{len(chunks)} to Weaviate.")
 
         print("Successfully processed and embedded all chunks.")
 
