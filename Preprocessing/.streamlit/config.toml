@@ -1,2 +1,21 @@
 [server]
-maxUploadSize = 1000  # Set the upload size limit in MB
+headless = true
+port = 8501  # Default port for local testing
+enableCORS = false
+enableXsrfProtection = false
+maxUploadSize = 1000
+
+
+[theme]
+base = "light"
+primaryColor = "#0D6051"
+secondaryBackgroundColor = "#f0f2e9"
+textColor = "#263d36"
+font = "IBM Plex Mono"
+
+[global]
+pageTitle = "Minute Mate"
+favicon = "assets/favicon.ico"
+
+[home]
+welcomeMessage = "Welcome to Minute Mate: Your Meeting Transcription and Summarization Tool!"

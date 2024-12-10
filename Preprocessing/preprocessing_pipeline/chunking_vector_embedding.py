@@ -1,28 +1,34 @@
-import os
-from openai import OpenAI
+import streamlit as st
+import requests
 import weaviate
 import tiktoken  # Use tiktoken for OpenAI-compatible tokenization
-from utils.env_setup import load_env
 from utils.azure_blob_utils import download_from_azure
 
-# Load environment variables
-load_env()
-WEAVIATE_URL = os.getenv("WEAVIATE_URL")
-WEAVIATE_API_KEY = os.getenv("WEAVIATE_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Dynamic API Key Retrieval
+def get_weaviate_client():
+    api_keys = st.session_state.get("api_keys", {})
+    weaviate_url = api_keys.get("WEAVIATE_URL")
+    weaviate_api_key = api_keys.get("WEAVIATE_API_KEY")
 
-# Initialize Weaviate client
-client = weaviate.Client(
-    url=WEAVIATE_URL,
-    auth_client_secret=weaviate.AuthApiKey(api_key=WEAVIATE_API_KEY)
+    if not weaviate_url or not weaviate_api_key:
+        raise ValueError("Weaviate API configuration is missing. Please configure it in the Streamlit app.")
+
+    return weaviate.Client(
+        url=weaviate_url,
+        auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key)
 )
 
-# Initialize OpenAI client for embedding
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+def get_openai_api_key():
+    api_keys = st.session_state.get("api_keys", {})
+    openai_api_key = api_keys.get("OPENAI_API_KEY")
+
+    if not openai_api_key:
+        raise ValueError("OpenAI API key is missing. Please configure it in the Streamlit app.")
+
+    return openai_api_key
 
 # Initialize tiktoken for OpenAI's embedding model
 tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
-
 
 def fetch_matching_chunks(meeting_date, meeting_type, file_type, source_document):
     """
@@ -37,6 +43,7 @@ def fetch_matching_chunks(meeting_date, meeting_type, file_type, source_document
     Returns:
         list: A list of matching documents.
     """
+    client = get_weaviate_client()
     query = f"""
     {{
         Get {{
@@ -67,6 +74,7 @@ def delete_matching_chunks(documents):
     Args:
         documents (list): List of documents with IDs to delete.
     """
+    client = get_weaviate_client()
     for doc in documents:
         doc_id = doc["_additional"]["id"]
         client.data_object.delete(doc_id)
@@ -83,6 +91,10 @@ def tokenize_and_embed_text(clean_file_name, metadata, max_chunk_size=250):
         max_chunk_size (int): Maximum token size for each chunk.
     """
     try:
+        # Initialize clients dynamically
+        client = get_weaviate_client()
+        openai_api_key = get_openai_api_key()
+
         # Download cleaned text from Azure
         clean_text = download_from_azure("clean", clean_file_name)
         tokens = tokenizer.encode(clean_text)
@@ -107,8 +119,17 @@ def tokenize_and_embed_text(clean_file_name, metadata, max_chunk_size=250):
 
         # Embed and upload each chunk
         for i, chunk in enumerate(chunks):
-            response = openai_client.embeddings.create(input=chunk, model="text-embedding-ada-002")
-            embedding = response.data[0].embedding
+            # Request embedding from OpenAI
+            headers = {"Authorization": f"Bearer {openai_api_key}"}
+            response = requests.post(
+                "https://api.openai.com/v1/embeddings",
+                headers=headers,
+                json={"input": chunk, "model": "text-embedding-ada-002"}
+            )
+            if response.status_code != 200:
+                raise ValueError(f"OpenAI embedding error: {response.status_code} - {response.text}")
+
+            embedding = response.json()["data"][0]["embedding"]
 
             client.data_object.create(
                 data_object={

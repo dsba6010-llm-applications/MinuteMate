@@ -1,11 +1,15 @@
-import os
 import requests
+import streamlit as st
 from utils.azure_blob_utils import download_from_azure
-from utils.env_setup import load_env
 
-# Load environment variables
-load_env()
-ASSEMBLY_AI_KEY = os.getenv("ASSEMBLY_AI_KEY")
+# Dynamically fetch AssemblyAI API key from Streamlit session state
+def get_assembly_ai_key():
+    api_keys = st.session_state.get("api_keys", {})
+    assembly_ai_key = api_keys.get("ASSEMBLY_AI_KEY")
+    if not assembly_ai_key:
+        raise ValueError("AssemblyAI API key is missing. Please configure it in the Streamlit app.")
+    return assembly_ai_key
+
 ASSEMBLY_AI_ENDPOINT = "https://api.assemblyai.com/v2"
 
 def transcribe_audio(raw_file_name, model=None, speaker_labels=False):
@@ -20,8 +24,11 @@ def transcribe_audio(raw_file_name, model=None, speaker_labels=False):
     Returns:
     - str: Transcribed text, or None if transcription fails.
     """
-    headers = {"authorization": ASSEMBLY_AI_KEY}
     try:
+        # Fetch the AssemblyAI key dynamically
+        assembly_ai_key = get_assembly_ai_key()
+        headers = {"authorization": assembly_ai_key}
+
         # Step 1: Download the raw audio file from Azure
         raw_content = download_from_azure("raw", raw_file_name, as_text=False)
         print(f"Downloaded {raw_file_name} from Azure for transcription.")
@@ -82,3 +89,4 @@ def transcribe_audio(raw_file_name, model=None, speaker_labels=False):
     except Exception as e:
         print(f"Error during transcription: {e}")
         return None
+
