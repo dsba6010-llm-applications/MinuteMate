@@ -32,24 +32,24 @@ def display_chat_messages() -> None:
 
 st.title("📝 Minute Mate")
 
-with st.sidebar:
+# with st.sidebar:
     
-    # TODO add image to app assets to deploy
-    # st.sidebar.image("./../../assets/Fun_Logo.jpg", width=150)
-    st.subheader("Speeding up Municipal Communication")
+#     # TODO add image to app assets to deploy
+#     # st.sidebar.image("./../../assets/Fun_Logo.jpg", width=150)
+#     st.subheader("Speeding up Municipal Communication")
 
-    st.header("Settings")
-    with st.form(key='api_keys_form'):
-        openai_key = st.text_input("Enter your OpenAI Key", type="password", help="Your OpenAI API key for accessing GPT models.")
-        weaviate_url = st.text_input("Enter Weaviate URL", help="The URL of your Weaviate instance.")
-        weaviate_api_key = st.text_input("Enter Weaviate API Key", type="password", help="API key for authenticating with Weaviate.")
-        submit_button = st.form_submit_button(label="Save Settings")
+#     st.header("Settings")
+#     with st.form(key='api_keys_form'):
+#         openai_key = st.text_input("Enter your OpenAI Key", type="password", help="Your OpenAI API key for accessing GPT models.")
+#         weaviate_url = st.text_input("Enter Weaviate URL", help="The URL of your Weaviate instance.")
+#         weaviate_api_key = st.text_input("Enter Weaviate API Key", type="password", help="API key for authenticating with Weaviate.")
+#         submit_button = st.form_submit_button(label="Save Settings")
     
-    if submit_button:
-        st.success("Settings saved successfully!", icon="💚")
-        st.session_state['openai_key'] = openai_key
-        st.session_state['weaviate_url'] = weaviate_url
-        st.session_state['weaviate_api_key'] = weaviate_api_key
+#     if submit_button:
+#         st.success("Settings saved successfully!", icon="💚")
+#         st.session_state['openai_key'] = openai_key
+#         st.session_state['weaviate_url'] = weaviate_url
+#         st.session_state['weaviate_api_key'] = weaviate_api_key
 
 
 
@@ -75,10 +75,10 @@ if not st.session_state.greetings:
         st.session_state.greetings = True
 
 example_prompts = [
-    "Summarize my last meeting with the marketing team",
-    "Retrieve the project proposal document from the cloud",
-    "Find all files related to Q3 sales reports",
-    "Check my upcoming meetings for today",
+    "Summarize my last meeting with the town planner",
+    "Retrieve the project proposal document from the recordings",
+    "Find all the meetings with Q3 reports",
+    "Check my agenda meeting with the Director",
     "Summarize the 'Budget Planning' document",
     "List all files shared with me in the last week",
 ]
