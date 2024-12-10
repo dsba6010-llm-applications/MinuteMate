@@ -18,7 +18,11 @@ import weaviate  # Import Weaviate client
 from preprocessing_pipeline.pdf_conversion import convert_pdf_to_text
 from preprocessing_pipeline.audio_transcription import transcribe_audio
 from preprocessing_pipeline.text_cleaning import clean_text
-from preprocessing_pipeline.chunking_vector_embedding import tokenize_and_embed_text
+from preprocessing_pipeline.chunking_vector_embedding import (
+    tokenize_and_embed_text,
+    fetch_matching_chunks,
+    delete_matching_chunks
+)
 from utils.azure_blob_utils import (
     upload_to_azure,
     download_from_azure,
@@ -209,11 +213,21 @@ def upload_files_page():
         upload_to_azure("clean", clean_file_name, cleaned_text)
         st.write(f"Uploaded cleaned text to `clean/` folder: {clean_file_name}")
 
-        # Display cleaned text
-        st.text_area("Cleaned Text:", cleaned_text, height=200)
-        st.download_button("Download Cleaned Text", data=cleaned_text, file_name=clean_file_name)
+        # Stage 4: Check and Delete Existing Embeddings
+        with st.spinner("Checking for existing embeddings..."):
+            matching_chunks = fetch_matching_chunks(
+                str(metadata["meeting_date"]),
+                metadata["meeting_type"],
+                metadata["file_type"],
+                clean_file_name
+            )
+            if matching_chunks:
+                st.write(f"Found {len(matching_chunks)} existing chunks. Deleting...")
+                delete_matching_chunks(matching_chunks)
+            else:
+                st.write("No existing chunks found.")
 
-        # Stage 4: Chunk and Embed into Weaviate
+        # Stage 5: Chunk and Embed into Weaviate
         with st.spinner("Chunking and embedding text into Weaviate..."):
             tokenize_and_embed_text(clean_file_name, metadata)
         st.success("Document processed and embedded successfully!")
@@ -242,33 +256,23 @@ def view_documents_page():
             grouped = {}
             for blob in blobs:
                 try:
-                    # Extract the file name without folder prefix (e.g., "raw/")
-                    file_name = blob.split("/")[-1]  # Get only the file name part
-                    
-                    # Extract the date from the file name (assuming format: YYYY_MM_DD)
-                    parts = file_name.split("_")  # Split into ['2023', '12', '12', 'BOC', 'Agenda', ...]
+                    file_name = blob.split("/")[-1]  # Extract the file name
+                    parts = file_name.split("_")  # Split into parts: ['2023', '12', '12', 'BOC', 'Agenda', ...]
                     date_str = "_".join(parts[:3])  # Join the first three parts: '2023_12_12'
-                    
-                    # Convert the date string to a readable format
                     readable_date = datetime.strptime(date_str, "%Y_%m_%d").strftime("%B %d, %Y")
-                    
-                    # Group by the readable date
                     if readable_date not in grouped:
                         grouped[readable_date] = []
                     grouped[readable_date].append(blob)
                 except (ValueError, IndexError):
-                    # Handle files with unexpected formats
                     if "Unknown Date" not in grouped:
                         grouped["Unknown Date"] = []
                     grouped["Unknown Date"].append(blob)
             return grouped
 
-        # Group blobs by date
         raw_grouped = group_blobs_by_date(raw_blobs)
         dirty_grouped = group_blobs_by_date(dirty_blobs)
         clean_grouped = group_blobs_by_date(clean_blobs)
 
-        # Function to display blobs within a group
         def display_grouped_blobs(grouped_blobs, category):
             if grouped_blobs:
                 st.subheader(f"{category.capitalize()} Documents")
@@ -282,7 +286,6 @@ def view_documents_page():
             else:
                 st.info(f"No documents found in the {category} category.")
 
-        # Display grouped blobs
         display_grouped_blobs(raw_grouped, "raw")
         display_grouped_blobs(dirty_grouped, "dirty")
         display_grouped_blobs(clean_grouped, "clean")
