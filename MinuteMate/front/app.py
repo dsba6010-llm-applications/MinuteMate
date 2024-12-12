@@ -118,7 +118,7 @@ if prompt := (st.chat_input("Type your prompt") or button_pressed):
     try:
         # Make API call to backend
         response = requests.post(
-            "http://host.docker.internal:8001/process-prompt",  # Adjust URL as needed
+            "http://host.docker.internal:8000/process-prompt",  # Adjust URL as needed
             json={"user_prompt_text": prompt}
         )
         
