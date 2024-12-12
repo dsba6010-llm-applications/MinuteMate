@@ -51,8 +51,6 @@ st.title("📝 Minute Mate")
 #         st.session_state['weaviate_url'] = weaviate_url
 #         st.session_state['weaviate_api_key'] = weaviate_api_key
 
-
-
 with st.expander("Built with Weaviate, OpenAI and Streamlit"):
     st.caption("MinuteMate improves how municipalities communicate with their citizens by simplifying the creation of meeting minutes. Upload your meeting audio and get formatted, ready-to-use minutes in less time. This ensures faster, clearer communication between local governments and their communities, providing key points, agenda items, and voting outcomes quickly and efficiently.")
 
@@ -75,21 +73,21 @@ if not st.session_state.greetings:
         st.session_state.greetings = True
 
 example_prompts = [
-    "Summarize my last meeting with the town planner",
-    "Retrieve the project proposal document from the recordings",
-    "Find all the meetings with Q3 reports",
-    "Check my agenda meeting with the Director",
-    "Summarize the 'Budget Planning' document",
-    "List all files shared with me in the last week",
+    "Generate a list of all Board of Commissioner Meetings held in 2023",
+    "List the Agenda from the 7/16/2024 Board of Commissioner Meeting",
+    "Generate a list of all Rezoning cases in 2024.",
+    "Summarize the Board of Commissioner Meeting Audio Transcript from 7/16/2024.",
+    "List any Meetings with Budget discussions from 2023.",
+    "When was the Tripointe Home Development off of Wilkinson Approved?",
 ]
 
 example_prompts_help = [
-    "Summarize a specific meeting based on team or subject",
-    "Search and retrieve a specific document from your cloud storage",
-    "Find all files related to a specific topic (e.g., Q3 sales)",
-    "Check your calendar for upcoming meetings or events",
-    "Summarize a specific document by name or topic",
-    "List all files that were shared with you recently",
+    "Generate a list of all Board of Commissioner Meetings held in 2023",
+    "List the Agenda from the 7/16/2024 Board of Commissioner Meeting",
+    "Generate a list of all Rezoning cases in 2024.",
+    "Summarize the Board of Commissioner Meeting Audio Transcript from 7/16/2024.",
+    "List any Meetings with Budget discussions from 2023.",
+    "When was the Tripointe Home Development off of Wilkinson Approved?",
 ]
 
 button_cols = st.columns(3)
