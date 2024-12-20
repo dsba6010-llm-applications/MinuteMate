@@ -1,0 +1,7 @@
+[theme]
+base = "light"  # Base theme
+primaryColor = "#ff0808"  # Highlight color (for active buttons, etc.)
+backgroundColor = "#F0F2E9"  # Main page background color
+secondaryBackgroundColor = "#DCE4D9"  # Sidebar background color (darker than main page)
+textColor = "#263D36"  # Consistent text color for both main page and sidebar
+font = "sans serif"  # Font for the entire app

@@ -1,2 +1,6 @@
 streamlit==1.40.1
 pandas==2.2.3
+requests
+weaviate-client==4.7.1
+openai
+pydantic

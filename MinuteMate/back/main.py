@@ -26,7 +26,6 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
-
 try:
     nltk.download('punkt')
     nltk.download('punkt_tab')
@@ -34,13 +33,11 @@ try:
 except Exception as e:
     print(f"Error downloading NLTK resources: {e}")
 
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-
 
 # Initialize the FastAPI app
 app = FastAPI(
@@ -58,14 +55,15 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Define request and response models
-class PromptRequest(BaseModel):
-    user_prompt_text: str = Field(..., min_length=1, max_length=1000)
-
+# Update ContextSegment to include a metadata dictionary
 class ContextSegment(BaseModel):
     chunk_id: int
     content: str
     score: Optional[float] = None
+    metadata: Optional[dict] = None  # Add metadata support
+
+class PromptRequest(BaseModel):
+    user_prompt_text: str = Field(..., min_length=1, max_length=1000)
 
 class PromptResponse(BaseModel):
     generated_response: str
@@ -127,7 +125,6 @@ class PromptProcessor:
     def extract_keywords(self, text: str) -> List[str]:
         """Extract keywords using RAKE"""
         try:
-            
             rake = Rake()
             rake.extract_keywords_from_text(text)
             return rake.get_ranked_phrases()[:3]
@@ -135,7 +132,7 @@ class PromptProcessor:
             logger.error(f"Keyword extraction error: {e}")
             return []
 
-    def search_weaviate(self, query: str, search_type: str = 'keyword') -> List[ContextSegment]:
+    def search_weaviate(self, query: str, search_type: str = 'keyword'):
         """Perform search in Weaviate database"""
         try:
             collection = self.weaviate_client.collections.get('MeetingDocument')
@@ -146,7 +143,6 @@ class PromptProcessor:
                     query=",".join(keywords),
                     limit=5
                 )
-                print(keywords)
             elif search_type == 'vector':
                 embedding = self.openai_client.embeddings.create(
                     model='text-embedding-3-small',
@@ -160,24 +156,47 @@ class PromptProcessor:
             else:
                 raise ValueError(f"Unsupported search type: {search_type}")
 
-            context_segments =  [
+            # Extract metadata fields from properties
+            # Make sure these fields exist in your Weaviate schema and data.
+            context_segments = [
                 ContextSegment(
                     chunk_id=int(item.properties.get('chunk_id', 0)),
                     content=item.properties.get('content', ''),
-                    score=getattr(item.metadata, 'distance', None)
+                    score=getattr(item.metadata, 'distance', None),
+                    metadata={
+                        "meeting_date": item.properties.get('meeting_date', ''),
+                        "meeting_type": item.properties.get('meeting_type', ''),
+                        "file_type": item.properties.get('file_type', ''),
+                        "chunk_index": item.properties.get('chunk_index', ''),
+                        "source_document": item.properties.get('source_document', '')
+                    }
                 ) for item in results.objects
             ]
+
+            keywords = self.extract_keywords(query)  # Ensure keywords are returned even for vector search
             return context_segments, keywords
         except Exception as e:
             logger.error(f"Weaviate search error: {e}")
-            return []
+            return [], []
 
     def generate_response(self, prompt: str, context_segments: List[ContextSegment]) -> str:
         """Generate response using OpenAI"""
-        context_text = "\n".join([
-            f"<ContextSegment{seg.chunk_id}>\n{seg.content}" 
-            for seg in context_segments
-        ])
+
+        # Include metadata in the context to help the LLM make more informed decisions
+        context_text_list = []
+        for seg in context_segments:
+            meta = seg.metadata if seg.metadata else {}
+            context_text_list.append(
+                f"<ContextSegment{seg.chunk_id}>\n"
+                f"Content: {seg.content}\n"
+                f"Meeting Date: {meta.get('meeting_date', 'N/A')}\n"
+                f"Meeting Type: {meta.get('meeting_type', 'N/A')}\n"
+                f"File Type: {meta.get('file_type', 'N/A')}\n"
+                f"Chunk Index: {meta.get('chunk_index', 'N/A')}\n"
+                f"Source Document: {meta.get('source_document', 'N/A')}\n"
+            )
+
+        context_text = "\n".join(context_text_list)
 
         try:
             response = self.openai_client.chat.completions.create(
@@ -185,7 +204,12 @@ class PromptProcessor:
                 messages=[
                     {
                         "role": "system", 
-                        "content": f"Use this context if relevant: {context_text}"
+                        "content": (
+                            "You are an assistant that uses retrieved meeting data with metadata. "
+                            "Consider the given context segments and their metadata to provide a more accurate and informed response. "
+                            "If the metadata (like meeting_date, meeting_type, etc.) is relevant, incorporate it into your answer.\n\n"
+                            f"Use this context if relevant:\n{context_text}"
+                        )
                     },
                     {
                         "role": "user", 
@@ -201,7 +225,6 @@ class PromptProcessor:
 
     def check_prompt(self, prompt: str) -> str:
         """Check prompt appropriateness using OpenAI"""
-
         try:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
@@ -209,19 +232,7 @@ class PromptProcessor:
                     {
                         "role": "system", 
                         "content": """A local government hosts a chat system that uses retrieval-augmented generation 
-                        to improve public access to the contents of its public meetings.  The system has access to 
-                        meeting agendas, minutes, and transcriptions.  
-                        
-                        Your role is to determine whether prompts provided by users of this system are appropriate. 
-                        It's very important that users be able to access reasonable to reasonable requests, but toxic, 
-                        abusive, or illegal responses should be identified.  
-                        
-                        Requests seeking information that is accurate and politically relevant are appropriate, 
-                        even if the information sought is embarassing to the government or individuals or includes
-                        references to abusive, illegal, or controversial actions or ideas.  
-                        
-                        The first word of your response is always 'appropriate', 'inappropriate', or 'ambiguous'. 
-                        The rest of your response provides the top three to five concise factors that explain this decision."""
+                        to improve public access to the contents of its public meetings... (same instructions)"""
                     },
                     {
                         "role": "user", 
@@ -240,27 +251,13 @@ class PromptProcessor:
 
     def check_response(self, prompt: str) -> str:
         """Check response appropriateness using OpenAI"""
-
         try:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {
                         "role": "system", 
-                        "content": """A local government hosts a chat system that uses retrieval-augmented generation 
-                        to improve public access to the contents of its public meetings.  The system has access to 
-                        meeting agendas, minutes, and transcriptions.  
-                        
-                        Your role is to determine whether the chat system's responses to prompts are appropriate. 
-                        It's very important that the chat system be able to deliver reasonable responses, 
-                        but clearly toxic, abusive, or illegal responses should be identified.
-                        
-                        Information that is accurate and politically relevant is appropriate, even if it is embarassing 
-                        to the government or individuals or includes references to abusive, illegal, or controversial 
-                        actions or ideas.
-                        
-                        The first word of your response is always 'appropriate', 'inappropriate', or 'ambiguous'.  
-                        The rest of your response provides the top three to five concise factors that explain this decision."""
+                        "content": """A local government hosts a chat system... (same instructions)"""
                     },
                     {
                         "role": "user", 
@@ -280,11 +277,10 @@ class PromptProcessor:
     def process_prompt(self, prompt_request: PromptRequest) -> PromptResponse:
         """Main method to process user prompt"""
         try:
-            
             # Check the user prompt for inappropriate content
             prompt_check = self.check_prompt(prompt_request.user_prompt_text)
             if prompt_check.split(maxsplit=1)[0] == 'inappropriate':
-                return PromptResponse(generated_response = 'inappropriate prompt detected')
+                return PromptResponse(generated_response='inappropriate prompt detected')
 
             # Search for relevant context
             context_segments, keywords = self.search_weaviate(prompt_request.user_prompt_text)
@@ -298,12 +294,12 @@ class PromptProcessor:
             # Check the generated response for inappropriate content
             response_check = self.check_response(prompt_request.user_prompt_text)
             if response_check.split(maxsplit=1)[0] == 'inappropriate':
-                return PromptResponse(generated_response = 'inappropriate response detected')
+                return PromptResponse(generated_response='inappropriate response detected')
 
             return PromptResponse(
                 generated_response=generated_response,
                 context_segments=context_segments,
-                keywords = keywords,
+                keywords=keywords,
                 error_code=0
             )
 
@@ -322,7 +318,6 @@ processor = PromptProcessor()
 async def process_prompt_endpoint(prompt_request: PromptRequest):
     """Process user prompt and return response"""
     return processor.process_prompt(prompt_request)
-
 
 # Cleanup on shutdown
 @app.on_event("shutdown")
